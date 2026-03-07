@@ -1,0 +1,11 @@
+asgiref==3.11.1
+certifi==2026.2.25
+Django==5.2.12
+djangorestframework==3.16.1
+jplephem==2.24
+numpy==2.4.2
+psycopg2-binary==2.9.11
+sgp4==2.25
+skyfield==1.54
+sqlparse==0.5.5
+tzdata==2025.3
