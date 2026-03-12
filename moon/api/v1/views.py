@@ -1,22 +1,29 @@
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
+from moon.models import Observation, FavouriteLocation
+from moon.services.observation_services import create_observation_with_analysis
+from moon.services.daily_service import get_daily_lunar_data
+from moon.services.visibility_service import (get_visibility_for_date,get_visibility_window,  
+    )
+
+from moon.services.favourite_location_service import create_favourite_location
+
 from .serializers import (
-    ObservationSerializer,
     DailyQuerySerializer,
     VisibilityQuerySerializer,
     VisibilityWindowQuerySerializer,
-)
-
-from moon.models import Observation
-from moon.services.observation_services import create_observation_with_analysis
-from moon.services.daily_service import get_daily_lunar_data
-from moon.services.visibility_service import (
-    get_visibility_for_date,
-    get_visibility_window,
-)
+    ObservationSerializer,
+    FavouriteLocationSerializer,
+    RegisterSerializer,
+    MeSerializer,
+    )
 
 
 @api_view(["GET"])
@@ -131,6 +138,7 @@ def visibility_window_view(request):
         ]
     })
 
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def observations_view(request):
@@ -162,3 +170,64 @@ def observations_view(request):
         ObservationSerializer(observation).data,
         status=status.HTTP_201_CREATED,
     )
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def favourites_view(request):
+    if request.method == "GET":
+        favourites = FavouriteLocation.objects.filter(user=request.user).order_by("name")
+        serializer = FavouriteLocationSerializer(favourites, many=True)
+        return Response(serializer.data)
+
+    serializer = FavouriteLocationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    favourite = create_favourite_location(
+        user=request.user,
+        name=data["name"],
+        latitude=data["latitude"],
+        longitude=data["longitude"],
+        elevation_m=data.get("elevation_m", 0),
+    )
+
+    return Response(FavouriteLocationSerializer(favourite).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def favourite_detail_view(request, pk):
+    favourite = get_object_or_404(FavouriteLocation, pk=pk, user=request.user)
+    favourite.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register_view(request):
+    serializer = RegisterSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    user = serializer.save()
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response(
+        {
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me_view(request):
+    serializer = MeSerializer(request.user)
+    return Response(serializer.data)
