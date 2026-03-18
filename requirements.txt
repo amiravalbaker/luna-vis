@@ -15,11 +15,13 @@ psycopg2==2.9.11
 psycopg2-binary==2.9.11
 PyJWT==2.11.0
 PyYAML==6.0.3
+requests==2.32.5
 referencing==0.37.0
 rpds-py==0.30.0
 sgp4==2.25
 skyfield==1.54
 sqlparse==0.5.5
+timezonefinder==8.2.1
 typing_extensions==4.15.0
 tzdata==2025.3
 uritemplate==4.2.0

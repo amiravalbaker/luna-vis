@@ -1,0 +1,53 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}Favourites - LunaVis{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h2>My Favourite Locations</h2>
+
+    <form id="favourite-form" class="form-grid">
+        <label>
+            Location name
+            <input type="text" id="name" placeholder="Home, Penzance, etc." required>
+        </label>
+
+        <label>
+            Location
+            <input type="text" id="location" placeholder="Penzance, England" required>
+        </label>
+
+        <div class="button-row">
+            <button type="button" id="find-location-btn">Find place</button>
+            <button type="button" id="use-my-location-btn">Use my location</button>
+        </div>
+
+        <div id="location-display"></div>
+
+        <input type="hidden" id="lat">
+        <input type="hidden" id="lon">
+
+        <label>
+            Elevation (m)
+            <input type="number" id="elevation_m" value="0">
+        </label>
+
+        <label>
+            Timezone
+            <input type="text" id="tz" value="Europe/London" required>
+        </label>
+
+        <button type="submit">Save Favourite</button>
+    </form>
+
+    <div id="favourite-status"></div>
+</section>
+
+<section class="card">
+    <h2>Saved Locations</h2>
+    <div id="favourites-list"></div>
+</section>
+
+<script src="{% static 'moon/js/favourites.js' %}"></script>
+{% endblock %}

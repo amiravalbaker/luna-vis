@@ -1,12 +1,16 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
+from datetime import datetime, time, UTC
+
+from yaml import serializer
+from moon.engine.phase import find_previous_new_moon, find_next_new_moon
 from moon.models import Observation, FavouriteLocation
 from moon.services.observation_services import create_observation_with_analysis
 from moon.services.daily_service import get_daily_lunar_data
@@ -14,6 +18,13 @@ from moon.services.visibility_service import (get_visibility_for_date,get_visibi
     )
 
 from moon.services.favourite_location_service import create_favourite_location
+
+from moon.services.location_service import (
+    get_timezone_from_coords,
+    timezone_label,
+    get_elevation_from_coords,
+    get_location_metadata,
+)
 
 from .serializers import (
     DailyQuerySerializer,
@@ -23,6 +34,7 @@ from .serializers import (
     FavouriteLocationSerializer,
     RegisterSerializer,
     MeSerializer,
+    LocationMetaQuerySerializer
     )
 
 
@@ -56,6 +68,10 @@ def daily_view(request):
         "moon_age_hours": summary.moon_age_hours,
         "illumination_fraction": summary.illumination_fraction,
         "phase_name": summary.phase_name,
+        "previous_phase_name": summary.previous_phase_name,
+        "previous_phase_time_utc": summary.previous_phase_time_utc,
+        "next_phase_name": summary.next_phase_name,
+        "next_phase_time_utc": summary.next_phase_time_utc,
     })
 
 
@@ -65,12 +81,25 @@ def visibility_view(request):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
 
+    selected_date = data["date"]
+    lat = data["lat"]
+    lon = data["lon"]
+    elevation_m = data.get("elevation_m", 0)
+    tz_name = data["tz"]
+
+    selected_dt_utc = datetime.combine(selected_date, time(12, 0), tzinfo=UTC)
+
+    previous_new_moon_utc = find_previous_new_moon(selected_dt_utc)
+    next_new_moon_utc = find_next_new_moon(selected_dt_utc)
+
+    visibility_anchor_date = next_new_moon_utc.date()
+
     result = get_visibility_for_date(
-        lat=data["lat"],
-        lon=data["lon"],
-        elevation_m=data["elevation_m"],
-        local_day=data["date"],
-        tz_name=data["tz"],
+        lat=lat,
+        lon=lon,
+        elevation_m=elevation_m,
+        local_day=visibility_anchor_date,
+        tz_name=tz_name,
     )
 
     criteria_payload = []
@@ -88,12 +117,20 @@ def visibility_view(request):
     agg = result["aggregate"]
 
     return Response({
+        "selected_date": str(selected_date),
+        "new_moon_date": str(visibility_anchor_date),
+        "previous_new_moon_utc": previous_new_moon_utc,
+        "next_new_moon_utc": next_new_moon_utc,
+        "previous_new_moon_date": str(previous_new_moon_utc.date()),
+        "next_new_moon_date": str(next_new_moon_utc.date()),
+
         "date_local": str(result["date_local"]),
         "sunset_utc": result["sunset_utc"],
         "moonset_utc": result["moonset_utc"],
         "moon_age_hours": result["moon_age_hours"],
         "within_visibility_window": result["within_visibility_window"],
         "criteria": criteria_payload,
+        
         "summary": None if agg is None else {
             "visible_count": agg.visible_count,
             "maybe_count": agg.maybe_count,
@@ -110,21 +147,43 @@ def visibility_window_view(request):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
 
+    selected_start_date = data["start_date"]
+    lat = data["lat"]
+    lon = data["lon"]
+    elevation_m = data.get("elevation_m", 0)
+    tz_name = data["tz"]
+    nights = data.get("nights", 5)
+
+    selected_dt_utc = datetime.combine(selected_start_date, time(12, 0), tzinfo=UTC)
+
+    previous_new_moon_utc = find_previous_new_moon(selected_dt_utc)
+    next_new_moon_utc = find_next_new_moon(selected_dt_utc)
+
+    visibility_anchor_date = next_new_moon_utc.date()
+
     result = get_visibility_window(
-        lat=data["lat"],
-        lon=data["lon"],
-        elevation_m=data["elevation_m"],
-        start_date=data["start_date"],
-        tz_name=data["tz"],
-        nights=data["nights"],
+        lat=lat,
+        lon=lon,
+        elevation_m=elevation_m,
+        start_date=visibility_anchor_date,
+        tz_name=tz_name,
+        nights=nights,
     )
 
     return Response({
-        "start_date": str(data["start_date"]),
-        "nights": data["nights"],
+        "selected_date": str(selected_start_date),
+        "new_moon_date": str(visibility_anchor_date),
+        "previous_new_moon_utc": previous_new_moon_utc,
+        "next_new_moon_utc": next_new_moon_utc,
+        "previous_new_moon_date": str(previous_new_moon_utc.date()),
+        "next_new_moon_date": str(next_new_moon_utc.date()),
+
+        "start_date": str(visibility_anchor_date),
+        "nights": nights,
         "optimistic_date": result.optimistic_date,
         "majority_date": result.majority_date,
         "conservative_date": result.conservative_date,
+
         "results": [
             {
                 "date_local": str(n.date_local),
@@ -203,6 +262,7 @@ def favourite_detail_view(request, pk):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(["POST"])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def register_view(request):
     serializer = RegisterSerializer(data=request.data)
@@ -231,3 +291,14 @@ def register_view(request):
 def me_view(request):
     serializer = MeSerializer(request.user)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def location_meta_view(request):
+    serializer = LocationMetaQuerySerializer(data=request.GET)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    meta = get_location_metadata(data["lat"], data["lon"])
+    return Response(meta)

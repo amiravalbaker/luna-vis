@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LunaVis{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'moon/css/styles.css' %}">
+</head>
+<body class="app-background">
+    <header class="site-header">
+        <h1>LunaVis</h1>
+
+        <nav class="main-nav">
+            <button type="button" id="calendar-toggle-btn" class="link-button">
+                📅 <span id="current-date-label">Set Date</span>
+            </button>
+
+            <button type="button" id="location-toggle-btn" class="link-button">
+                📍 <span id="current-location-label">Set Location</span>
+            </button>
+
+            <button type="button" id="settings-toggle-btn" class="icon-button" title="Settings">
+                ⚙ <span>Settings</span>
+            </button>
+        </nav>
+    </header>
+
+    <div id="date-panel" class="location-panel hidden">
+        <div class="location-panel-card">
+            <div class="location-panel-header">
+                <h2>Select Date</h2>
+                <button type="button" id="close-date-panel-btn" class="link-button">Close</button>
+            </div>
+
+            <div class="form-grid">
+                <label>
+                    Date
+                    <input type="date" id="global-date-input">
+                </label>
+
+                <div class="button-row">
+                    <button type="button" id="global-date-today-btn">Today</button>
+                    <button type="button" id="global-date-clear-btn">Clear</button>
+                </div>
+                <div id="global-date-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="location-panel" class="location-panel hidden">
+        <div class="location-panel-card">
+            <div class="location-panel-header">
+                <h2>Select Location</h2>
+                <button type="button" id="close-location-panel-btn" class="link-button">Close</button>
+            </div>
+
+            <div class="form-grid">
+                <label>
+                    Location
+                    <input type="text" id="global-location-input" placeholder="Enter a place name or coordinates">
+                </label>
+
+                <div class="button-row">
+                    <button type="button" id="global-find-location-btn">Find place</button>
+                    <button type="button" id="global-use-my-location-btn">Use my location</button>
+                    <button type="button" id="global-clear-location-btn">Clear</button>
+                </div>
+
+                <div id="global-location-display"></div>
+
+                <label>
+                    Timezone
+                    <input type="text" id="global-tz-input" value="Europe/London">
+                </label>
+
+                <label>
+                    Estimated elevation (m)
+                    <input type="number" id="global-elevation-input" value="0">
+                </label>
+            </div>
+
+            <div id="location-auth-section" class="hidden">
+                <div class="button-row">
+                    <button type="button" id="save-location-favourite-btn">Save current location to favourites</button>
+                </div>
+
+                <div class="favourites-section">
+                    <h3>Saved Favourite Locations</h3>
+                    <div id="location-favourites-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-panel" class="location-panel hidden">
+        <div class="location-panel-card">
+            <div class="location-panel-header">
+                <h2>Settings</h2>
+                <button type="button" id="close-settings-panel-btn" class="link-button">Close</button>
+            </div>
+
+            <div class="form-grid">
+                <div id="auth-nav-panel"></div>
+
+                <a href="/">Daily</a>
+                <a href="/visibility/">New Moon Visibility</a>
+                <a href="/observations/">Observation Log</a>
+                <a href="/favourites/">Favourite Locations</a>
+            </div>
+        </div>
+    </div>
+
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'moon/js/api.js' %}"></script>
+    <script src="{% static 'moon/js/auth.js' %}"></script>
+    <script src="{% static 'moon/js/date.js' %}"></script>
+    <script src="{% static 'moon/js/location.js' %}"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        try {
+            updateAuthNav();
+            updateAuthPanel();
+        } catch (error) {
+            console.error("auth UI failed:", error);
+        }
+
+        try {
+            initializeGlobalDateUI();
+        } catch (error) {
+            console.error("initializeGlobalDateUI failed:", error);
+        }
+
+        try {
+            initializeGlobalLocationUI();
+        } catch (error) {
+            console.error("initializeGlobalLocationUI failed:", error);
+        }
+
+        const settingsPanel = document.getElementById("settings-panel");
+        document.getElementById("settings-toggle-btn")?.addEventListener("click", () => {
+            settingsPanel?.classList.remove("hidden");
+        });
+        document.getElementById("close-settings-panel-btn")?.addEventListener("click", () => {
+            settingsPanel?.classList.add("hidden");
+        });
+    });
+</script>
+</body>
+</html>

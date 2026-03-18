@@ -1,0 +1,101 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}Observations - LunaVis{% endblock %}
+
+{% block content %}
+<section class="card">
+    <div id="selected-location-summary"></div>
+</section>
+<section class="card">
+    <h2>Add Observation</h2>
+
+    <form id="observation-form" class="form-grid">
+        <label>
+            Observer name
+            <input type="text" id="observer_name" placeholder="Optional">
+        </label>
+
+        <label>
+            Location
+            <input type="text" id="location" placeholder="Penzance, England" required>
+        </label>
+
+        <div class="button-row">
+            <button type="button" id="find-location-btn">Find place</button>
+            <button type="button" id="use-my-location-btn">Use my location</button>
+        </div>
+
+        <div id="location-display"></div>
+
+        <input type="hidden" id="lat">
+        <input type="hidden" id="lon">
+
+        <label>
+            Elevation (m)
+            <input type="number" id="elevation_m" value="0">
+        </label>
+
+        <label>
+            Observation time
+            <input type="datetime-local" id="observation_time" required>
+        </label>
+
+        <label>
+            Visible?
+            <select id="visible" required>
+                <option value="true">Seen</option>
+                <option value="false">Not seen</option>
+            </select>
+        </label>
+
+        <label>
+            Detection method
+            <select id="detection_method" required>
+                <option value="NAKED_EYE">Naked Eye</option>
+                <option value="OPTICAL_AID">Optical Aid</option>
+                <option value="BINOCULARS">Binoculars</option>
+                <option value="TELESCOPE">Telescope</option>
+                <option value="CAMERA">Camera / CCD</option>
+                <option value="UNKNOWN">Unknown</option>
+            </select>
+        </label>
+
+        <label>
+            Sky condition
+            <select id="sky_condition" required>
+                <option value="CLEAR">Clear</option>
+                <option value="PARTLY_CLOUDY">Partly Cloudy</option>
+                <option value="HAZY">Hazy</option>
+                <option value="CLOUDY">Cloudy</option>
+            </select>
+        </label>
+
+        <label>
+            Time spent searching (minutes)
+            <input type="number" id="time_spent_searching_minutes" value="0">
+        </label>
+
+        <label>
+            Notes
+            <textarea id="notes" rows="4"></textarea>
+        </label>
+
+        <label>
+            Timezone
+            <input type="text" id="tz" value="Europe/London" required>
+        </label>
+
+        <button type="submit">Save Observation</button>
+    </form>
+
+    <div id="observation-status"></div>
+</section>
+
+<section class="card">
+    <h2>My Observations</h2>
+    <div id="observations-list"></div>
+</section>
+
+<script src="{% static 'moon/js/observations.js' %}"></script>
+{% endblock %}

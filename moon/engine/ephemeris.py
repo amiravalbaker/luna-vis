@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from datetime import date, datetime, timedelta, UTC
 from typing import Optional, Tuple
 
@@ -119,6 +121,12 @@ def _alt_az_at(
 
     elongation_deg = sun_app.separation_from(moon_app).degrees
 
+    # Approximate phase angle using elongation
+    phase_angle_deg =float(elongation_deg)
+
+    # Illuminated fraction approximation
+    illumination_fraction = (1.0 - math.cos(math.radians(phase_angle_deg))) / 2.0
+
     return (
         float(sun_alt.degrees),
         float(sun_az.degrees),
@@ -126,6 +134,8 @@ def _alt_az_at(
         float(moon_az.degrees),
         float(elongation_deg),
         float(moon_distance.km),
+        float(phase_angle_deg),
+        float(illumination_fraction),
     )
 
 
@@ -153,8 +163,11 @@ def _build_context_at_time(
     sunset_utc: datetime,
     moonset_utc: Optional[datetime],
 ):
-    sun_alt, sun_az, moon_alt, moon_az, elongation_deg, moon_distance_km = _alt_az_at(
-        lat, lon, elevation_m, when_utc
+    sun_alt, sun_az, moon_alt, moon_az, elongation_deg, moon_distance_km, phase_angle_deg, illumination_fraction = _alt_az_at(
+        lat=lat,
+        lon=lon,
+        elevation_m=elevation_m,
+        when_utc=when_utc,
     )
 
     daz_deg, arcv_deg, arcl_deg = _derive_visibility_geometry(
@@ -184,7 +197,7 @@ def _build_context_at_time(
         arcl_deg=arcl_deg,
         lag_minutes=lag_minutes,
         moon_age_hours=None,
-        illumination=None,
+        illumination=illumination_fraction,
     )
 
 

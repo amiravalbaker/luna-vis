@@ -1,0 +1,28 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}Login - LunaVis{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h2>Login</h2>
+
+    <form id="login-form" class="form-grid">
+        <label>
+            Username
+            <input type="text" id="username" required>
+        </label>
+
+        <label>
+            Password
+            <input type="password" id="password" required>
+        </label>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div id="login-status"></div>
+</section>
+
+<script src="{% static 'moon/js/login.js' %}"></script>
+{% endblock %}
