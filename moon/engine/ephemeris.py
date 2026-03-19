@@ -4,6 +4,7 @@ import math
 
 from datetime import date, datetime, timedelta, UTC
 from typing import Optional, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from skyfield.api import Loader, wgs84
 from skyfield import almanac
@@ -20,14 +21,22 @@ SUN = _eph["sun"]
 MOON = _eph["moon"]
 
 
-def _to_utc_range_for_local_date(local_day: date) -> Tuple[datetime, datetime]:
-    start_utc = datetime(local_day.year, local_day.month, local_day.day, 0, 0, 0, tzinfo=UTC)
-    end_utc = start_utc + timedelta(days=1)
-    return start_utc, end_utc
+def _get_tzinfo(tz_name: str):
+    try:
+        return ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        return UTC
 
 
-def _find_sunrise_utc(lat: float, lon: float, local_day: date) -> Optional[datetime]:
-    start_utc, end_utc = _to_utc_range_for_local_date(local_day)
+def _to_utc_range_for_local_date(local_day: date, tz_name: str) -> Tuple[datetime, datetime]:
+    tzinfo = _get_tzinfo(tz_name)
+    start_local = datetime(local_day.year, local_day.month, local_day.day, 0, 0, 0, tzinfo=tzinfo)
+    end_local = start_local + timedelta(days=1)
+    return start_local.astimezone(UTC), end_local.astimezone(UTC)
+
+
+def _find_sunrise_utc(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> Optional[datetime]:
+    start_utc, end_utc = _to_utc_range_for_local_date(local_day, tz_name)
     t0 = _ts.from_datetime(start_utc)
     t1 = _ts.from_datetime(end_utc)
 
@@ -41,8 +50,8 @@ def _find_sunrise_utc(lat: float, lon: float, local_day: date) -> Optional[datet
     return None
 
 
-def _find_sunset_utc(lat: float, lon: float, local_day: date) -> Optional[datetime]:
-    start_utc, end_utc = _to_utc_range_for_local_date(local_day)
+def _find_sunset_utc(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> Optional[datetime]:
+    start_utc, end_utc = _to_utc_range_for_local_date(local_day, tz_name)
     t0 = _ts.from_datetime(start_utc)
     t1 = _ts.from_datetime(end_utc)
 
@@ -56,8 +65,31 @@ def _find_sunset_utc(lat: float, lon: float, local_day: date) -> Optional[dateti
     return None
 
 
-def _find_moonrise_utc(lat: float, lon: float, local_day: date) -> Optional[datetime]:
-    start_utc, end_utc = _to_utc_range_for_local_date(local_day)
+def _find_nearest_moonrise_utc(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> Optional[datetime]:
+    # Fallback: if no moonrise occurs within this exact local date, use the nearest one
+    # from neighboring dates so the daily view can still show a practical rise time.
+    start_utc, _ = _to_utc_range_for_local_date(local_day - timedelta(days=1), tz_name)
+    _, end_utc = _to_utc_range_for_local_date(local_day + timedelta(days=1), tz_name)
+
+    t0 = _ts.from_datetime(start_utc)
+    t1 = _ts.from_datetime(end_utc)
+
+    topos = wgs84.latlon(latitude_degrees=lat, longitude_degrees=lon)
+    f = almanac.risings_and_settings(_eph, MOON, topos)
+
+    times, events = almanac.find_discrete(t0, t1, f)
+    moonrises = [t.utc_datetime().replace(tzinfo=UTC) for t, e in zip(times, events) if int(e) == 1]
+    if not moonrises:
+        return None
+
+    local_start_utc, local_end_utc = _to_utc_range_for_local_date(local_day, tz_name)
+    local_mid_utc = local_start_utc + ((local_end_utc - local_start_utc) / 2)
+
+    return min(moonrises, key=lambda rise_utc: abs((rise_utc - local_mid_utc).total_seconds()))
+
+
+def _find_moonrise_utc(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> Optional[datetime]:
+    start_utc, end_utc = _to_utc_range_for_local_date(local_day, tz_name)
     t0 = _ts.from_datetime(start_utc)
     t1 = _ts.from_datetime(end_utc)
 
@@ -68,11 +100,12 @@ def _find_moonrise_utc(lat: float, lon: float, local_day: date) -> Optional[date
     for t, e in zip(times, events):
         if int(e) == 1:
             return t.utc_datetime().replace(tzinfo=UTC)
-    return None
+
+    return _find_nearest_moonrise_utc(lat, lon, local_day, tz_name)
 
 
-def _find_moonset_utc(lat: float, lon: float, local_day: date) -> Optional[datetime]:
-    start_utc, end_utc = _to_utc_range_for_local_date(local_day)
+def _find_moonset_utc(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> Optional[datetime]:
+    start_utc, end_utc = _to_utc_range_for_local_date(local_day, tz_name)
     t0 = _ts.from_datetime(start_utc)
     t1 = _ts.from_datetime(end_utc)
 
@@ -86,16 +119,16 @@ def _find_moonset_utc(lat: float, lon: float, local_day: date) -> Optional[datet
     return None
 
 
-def _find_daily_events(lat: float, lon: float, local_day: date) -> tuple[
+def _find_daily_events(lat: float, lon: float, local_day: date, tz_name: str = "UTC") -> tuple[
     Optional[datetime],
     Optional[datetime],
     Optional[datetime],
     Optional[datetime],
 ]:
-    sunrise_utc = _find_sunrise_utc(lat, lon, local_day)
-    sunset_utc = _find_sunset_utc(lat, lon, local_day)
-    moonrise_utc = _find_moonrise_utc(lat, lon, local_day)
-    moonset_utc = _find_moonset_utc(lat, lon, local_day)
+    sunrise_utc = _find_sunrise_utc(lat, lon, local_day, tz_name)
+    sunset_utc = _find_sunset_utc(lat, lon, local_day, tz_name)
+    moonrise_utc = _find_moonrise_utc(lat, lon, local_day, tz_name)
+    moonset_utc = _find_moonset_utc(lat, lon, local_day, tz_name)
     return sunrise_utc, sunset_utc, moonrise_utc, moonset_utc
 
 
@@ -202,11 +235,11 @@ def _build_context_at_time(
 
 
 def compute_context_at_time(*, lat, lon, elevation_m, local_day, tz_name, when_utc: datetime):
-    sunset_utc = _find_sunset_utc(lat, lon, local_day)
+    sunset_utc = _find_sunset_utc(lat, lon, local_day, tz_name)
     if sunset_utc is None:
         raise ValueError("No sunset found for this location/date.")
 
-    moonset_utc = _find_moonset_utc(lat, lon, local_day)
+    moonset_utc = _find_moonset_utc(lat, lon, local_day, tz_name)
 
     return _build_context_at_time(
         lat=lat,
@@ -221,11 +254,11 @@ def compute_context_at_time(*, lat, lon, elevation_m, local_day, tz_name, when_u
 
 
 def compute_context_for_evening(*, lat, lon, elevation_m, local_day, tz_name):
-    sunset_utc = _find_sunset_utc(lat, lon, local_day)
+    sunset_utc = _find_sunset_utc(lat, lon, local_day, tz_name)
     if sunset_utc is None:
         raise ValueError("No sunset found for this location/date.")
 
-    moonset_utc = _find_moonset_utc(lat, lon, local_day)
+    moonset_utc = _find_moonset_utc(lat, lon, local_day, tz_name)
 
     return _build_context_at_time(
         lat=lat,
@@ -240,11 +273,11 @@ def compute_context_for_evening(*, lat, lon, elevation_m, local_day, tz_name):
 
 
 def compute_best_time_context(*, lat, lon, elevation_m, local_day, tz_name):
-    sunset_utc = _find_sunset_utc(lat, lon, local_day)
+    sunset_utc = _find_sunset_utc(lat, lon, local_day, tz_name)
     if sunset_utc is None:
         raise ValueError("No sunset found for this location/date.")
 
-    moonset_utc = _find_moonset_utc(lat, lon, local_day)
+    moonset_utc = _find_moonset_utc(lat, lon, local_day, tz_name)
 
     lag_minutes = 0
     if moonset_utc is not None:

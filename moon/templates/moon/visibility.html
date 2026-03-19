@@ -4,74 +4,64 @@
 {% block title %}New Moon Visibility - LunaVis{% endblock %}
 
 {% block content %}
-<section class="card moon-hero-card">
-    <div class="hero-top-row">
-        <div id="selected-location-summary" class="hero-meta"></div>
-        <div id="selected-date-summary" class="hero-meta hero-meta-right"></div>
-    </div>
+<div class="container-fluid px-0">
+    <div class="row g-3">
+        <div class="col-12">
+            <section class="card moon-hero-card visibility-hero-card mb-0">
+                <div class="hero-arrow-row">
+                    <button type="button" id="prev-date-btn" class="icon-button hero-arrow-btn">←</button>
 
-    <div class="hero-note-row">
-        <div class="date-window-note date-window-note-left">
-            Jump to previous new moon
-        </div>
-        <div class="date-window-note date-window-note-right">
-            Jump to next new moon
-        </div>
-    </div>
+                    <div class="moon-hero-center">
+                        <img id="visibility-moon-image"
+                             src="{% static 'moon/img/moon-day-01c.png' %}"
+                             alt="New moon visibility"
+                             class="moon-phase-image">
+                    </div>
 
-    <div class="hero-arrow-row">
-        <button type="button" id="prev-date-btn" class="icon-button hero-arrow-btn">←</button>
-
-        <div class="moon-hero-center">
-            <img id="visibility-moon-image"
-                 src="{% static 'moon/img/moon-placeholder.jpg' %}"
-                 alt="New moon visibility"
-                 class="moon-phase-image">
-            <div id="visibility-phase-summary" class="moon-phase-summary"></div>
+                    <button type="button" id="next-date-btn" class="icon-button hero-arrow-btn">→</button>
+                </div>
+            </section>
         </div>
 
-        <button type="button" id="next-date-btn" class="icon-button hero-arrow-btn">→</button>
+        <div class="col-12">
+            <section class="card hidden-form-card mb-0">
+                <form id="visibility-form" class="form-grid">
+                    <label>
+                        Date
+                        <input type="date" id="date" required>
+                    </label>
+
+                    <label>
+                        Timezone
+                        <input type="text" id="tz" value="Europe/London" required>
+                    </label>
+
+                    <label>
+                        Elevation (m)
+                        <input type="number" id="elevation_m" value="0">
+                    </label>
+
+                    <button type="submit">Check Visibility</button>
+                </form>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <div id="visibility-status"></div>
+                <div id="visibility-summary-cards" class="visibility-summary-grid"></div>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <h2>5-Day Visibility Window</h2>
+                <div id="window-status"></div>
+                <div id="window-summary" class="visibility-summary-grid"></div>
+            </section>
+        </div>
     </div>
-</section>
-
-<section class="card hidden-form-card">
-    <form id="visibility-form" class="form-grid">
-        <label>
-            Date
-            <input type="date" id="date" required>
-        </label>
-
-        <label>
-            Timezone
-            <input type="text" id="tz" value="Europe/London" required>
-        </label>
-
-        <label>
-            Elevation (m)
-            <input type="number" id="elevation_m" value="0">
-        </label>
-
-        <button type="submit">Check Visibility</button>
-    </form>
-</section>
-
-<section class="card">
-    <h2>Visibility Summary</h2>
-    <div id="visibility-status"></div>
-    <div id="visibility-summary-cards" class="visibility-summary-grid"></div>
-</section>
-
-<section class="card">
-    <h2>Visibility for Selected Date</h2>
-    <div id="visibility-results" class="results-grid"></div>
-</section>
-
-<section class="card">
-    <h2>5-Day Visibility Window</h2>
-    <div id="window-status"></div>
-    <div id="window-summary" class="visibility-summary-grid"></div>
-    <div id="window-results"></div>
-</section>
+</div>
 
 <script src="{% static 'moon/js/visibility.js' %}"></script>
 {% endblock %}

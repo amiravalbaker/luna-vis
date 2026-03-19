@@ -7,10 +7,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
-from datetime import datetime, time, UTC
+from datetime import datetime, time, UTC, timedelta
 
 from yaml import serializer
-from moon.engine.phase import find_previous_new_moon, find_next_new_moon
+from moon.engine.phase import find_previous_new_moon, find_next_new_moon, find_new_moon_on_date
 from moon.models import Observation, FavouriteLocation
 from moon.services.observation_services import create_observation_with_analysis
 from moon.services.daily_service import get_daily_lunar_data
@@ -34,7 +34,7 @@ from .serializers import (
     FavouriteLocationSerializer,
     RegisterSerializer,
     MeSerializer,
-    LocationMetaQuerySerializer
+    LocationMetaQuerySerializer,
     )
 
 
@@ -89,10 +89,14 @@ def visibility_view(request):
 
     selected_dt_utc = datetime.combine(selected_date, time(12, 0), tzinfo=UTC)
 
-    previous_new_moon_utc = find_previous_new_moon(selected_dt_utc)
-    next_new_moon_utc = find_next_new_moon(selected_dt_utc)
+    # If selected date is itself a new moon date, use that lunation.
+    same_day_new_moon_utc = find_new_moon_on_date(selected_date)
+    active_new_moon_utc = same_day_new_moon_utc or find_next_new_moon(selected_dt_utc)
 
-    visibility_anchor_date = next_new_moon_utc.date()
+    visibility_anchor_date = active_new_moon_utc.date()
+
+    previous_new_moon_utc = find_previous_new_moon(active_new_moon_utc - timedelta(seconds=1))
+    next_new_moon_utc = find_next_new_moon(active_new_moon_utc + timedelta(seconds=1))
 
     result = get_visibility_for_date(
         lat=lat,
@@ -100,6 +104,11 @@ def visibility_view(request):
         elevation_m=elevation_m,
         local_day=visibility_anchor_date,
         tz_name=tz_name,
+    )
+
+    # Keep moon age tied to the active lunation anchor shown in the UI.
+    anchor_moon_age_hours = (
+        (result["sunset_utc"] - active_new_moon_utc).total_seconds() / 3600.0
     )
 
     criteria_payload = []
@@ -119,6 +128,7 @@ def visibility_view(request):
     return Response({
         "selected_date": str(selected_date),
         "new_moon_date": str(visibility_anchor_date),
+        "new_moon_conjunction_utc": active_new_moon_utc,
         "previous_new_moon_utc": previous_new_moon_utc,
         "next_new_moon_utc": next_new_moon_utc,
         "previous_new_moon_date": str(previous_new_moon_utc.date()),
@@ -127,7 +137,7 @@ def visibility_view(request):
         "date_local": str(result["date_local"]),
         "sunset_utc": result["sunset_utc"],
         "moonset_utc": result["moonset_utc"],
-        "moon_age_hours": result["moon_age_hours"],
+        "moon_age_hours": anchor_moon_age_hours,
         "within_visibility_window": result["within_visibility_window"],
         "criteria": criteria_payload,
         
@@ -156,10 +166,14 @@ def visibility_window_view(request):
 
     selected_dt_utc = datetime.combine(selected_start_date, time(12, 0), tzinfo=UTC)
 
-    previous_new_moon_utc = find_previous_new_moon(selected_dt_utc)
-    next_new_moon_utc = find_next_new_moon(selected_dt_utc)
+    #If selected date is itself a new moon date, use that lunation.
+    same_day_new_moon_utc = find_new_moon_on_date(selected_start_date)
+    active_new_moon_utc = same_day_new_moon_utc or find_next_new_moon(selected_dt_utc)
 
-    visibility_anchor_date = next_new_moon_utc.date()
+    visibility_anchor_date = active_new_moon_utc.date()
+
+    previous_new_moon_utc = find_previous_new_moon(active_new_moon_utc - timedelta(seconds=1))
+    next_new_moon_utc = find_next_new_moon(active_new_moon_utc + timedelta(seconds=1))
 
     result = get_visibility_window(
         lat=lat,
@@ -170,9 +184,14 @@ def visibility_window_view(request):
         nights=nights,
     )
 
+    # First instance of 100% consensus
+    first_100_consensus_date = str(result.conservative_date) if result.conservative_date is not None else None
+
+
     return Response({
         "selected_date": str(selected_start_date),
         "new_moon_date": str(visibility_anchor_date),
+        "new_moon_conjunction_utc": active_new_moon_utc,
         "previous_new_moon_utc": previous_new_moon_utc,
         "next_new_moon_utc": next_new_moon_utc,
         "previous_new_moon_date": str(previous_new_moon_utc.date()),
@@ -183,6 +202,7 @@ def visibility_window_view(request):
         "optimistic_date": result.optimistic_date,
         "majority_date": result.majority_date,
         "conservative_date": result.conservative_date,
+        "first_100_consensus_date": first_100_consensus_date,
 
         "results": [
             {
@@ -192,6 +212,17 @@ def visibility_window_view(request):
                 "maybe_count": n.maybe_count,
                 "not_visible_count": n.not_visible_count,
                 "consensus_fraction": n.consensus_fraction,
+                "criteria": [
+                    {
+                        "criterion_id": r.criterion_id,
+                        "name": r.name,
+                        "verdict": r.verdict.value,
+                        "reason": r.reason,
+                        "band": r.band,
+                        "score": r.score,
+                    }
+                    for r in n.results
+                ],
             }
             for n in result.nights
         ]

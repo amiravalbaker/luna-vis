@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Moonset</title>
+  <defs>
+    <linearGradient id="moonsetSky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#33467e" />
+      <stop offset="100%" stop-color="#132043" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#moonsetSky)"/>
+  <rect x="10" y="40" width="44" height="3" rx="1.5" fill="#d8dff5" opacity="0.95"/>
+  <path d="M20 40a12 12 0 0 1 24 0" fill="#cfd9ff" stroke="#eef2ff" stroke-width="2"/>
+  <path d="M32 14v7" stroke="#eef2ff" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M28 18l4 4 4-4" fill="none" stroke="#eef2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

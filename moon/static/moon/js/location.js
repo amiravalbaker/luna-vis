@@ -139,6 +139,18 @@ async function fetchLocationMeta(lat, lon) {
     return await apiGet(`/api/v1/location-meta/?${params.toString()}`);
 }
 
+function getPlaceLabel(displayName) {
+    const raw = String(displayName || "").trim();
+    if (!raw) return "Saved Location";
+
+    const parts = raw.split(",").map(part => part.trim()).filter(Boolean);
+    if (!parts.length) return "Saved Location";
+
+    // Prefer a readable locality-like segment over numeric street tokens.
+    const preferred = parts.find(part => /[A-Za-z]/.test(part) && !/^\d/.test(part));
+    return (preferred || parts[0]).slice(0, 100);
+}
+
 /* -------------------------
    PANEL OPEN/CLOSE
 -------------------------- */
@@ -191,6 +203,11 @@ function populateGlobalLocationFields() {
     const authSection = document.getElementById("location-auth-section");
     if (authSection) {
         authSection.classList.toggle("hidden", !isLoggedIn());
+    }
+
+    const saveFavBtn = document.getElementById("save-location-favourite-btn");
+    if (saveFavBtn) {
+        saveFavBtn.classList.toggle("hidden", !isLoggedIn());
     }
 }
 
@@ -304,24 +321,51 @@ async function saveCurrentLocationAsFavouriteFromPanel() {
         return;
     }
 
-    const name = prompt(
-        "Enter a name for this favourite location:",
-        location.display_name || "Saved Location"
-    );
-    if (!name) return;
+    const normalizedName = getPlaceLabel(location.display_name);
 
     try {
+        if (display) display.textContent = "Saving favourite...";
+
         await authenticatedApiPost("/api/v1/favourites/", {
-            name,
+            name: normalizedName,
             latitude: parseFloat(location.lat),
             longitude: parseFloat(location.lon),
             elevation_m: parseInt(location.elevation_m || 0, 10),
         });
 
-        if (display) display.textContent = `Saved "${name}" to favourites.`;
+        if (display) display.textContent = `Saved "${normalizedName}" to favourites.`;
+        
+        await loadFavouriteLocationsIntoPanel();
+        
+        const input = document.getElementById("global-location-input");
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+            }, 500);
+        }
+    } catch (error) {
+        if (display) display.textContent = `Could not save favourite: ${error.message}`;
+    }
+}
+
+async function deleteFavouriteFromPanel(favouriteId, favouriteName) {
+    const display = document.getElementById("global-location-display");
+
+    if (!isLoggedIn()) {
+        window.location.href = "/login/";
+        return;
+    }
+
+    const shouldDelete = window.confirm(`Delete favourite "${favouriteName}"?`);
+    if (!shouldDelete) return;
+
+    try {
+        if (display) display.textContent = "Deleting favourite...";
+        await authenticatedApiDelete(`/api/v1/favourites/${favouriteId}/`);
+        if (display) display.textContent = `Deleted "${favouriteName}".`;
         await loadFavouriteLocationsIntoPanel();
     } catch (error) {
-        if (display) display.textContent = `Error: ${error.message}`;
+        if (display) display.textContent = `Could not delete favourite: ${error.message}`;
     }
 }
 
@@ -337,41 +381,45 @@ async function loadFavouriteLocationsIntoPanel() {
     try {
         const favourites = await authenticatedApiGet("/api/v1/favourites/");
 
-        if (!favourites.length) {
-            container.innerHTML = "<p>No saved favourites yet.</p>";
+        if (!favourites || favourites.length === 0) {
+            container.innerHTML = "<p>No saved favourites yet. Find a location and save it!</p>";
             return;
         }
 
-        container.innerHTML = favourites.map(fav => `
-            <div class="card">
-                <div><strong>${fav.name}</strong></div>
-                <div>${fav.latitude.toFixed(4)}, ${fav.longitude.toFixed(4)}</div>
-                <div>${fav.elevation_m} m</div>
-                <div class="button-row">
-                    <button
-                        type="button"
-                        class="choose-favourite-btn"
-                        data-name="${fav.name}"
-                        data-lat="${fav.latitude}"
-                        data-lon="${fav.longitude}"
-                        data-elevation="${fav.elevation_m}">
-                        Use
-                    </button>
-                </div>
+        container.innerHTML = favourites.map((fav, index) => `
+            <div class="favourite-row">
+                <button
+                    type="button"
+                    class="choose-favourite-btn"
+                    data-index="${index}">
+                    ${getPlaceLabel(fav.name)}
+                </button>
+                <button
+                    type="button"
+                    class="delete-favourite-btn"
+                    data-index="${index}"
+                    aria-label="Delete favourite ${getPlaceLabel(fav.name)}"
+                    title="Delete favourite">
+                    Delete
+                </button>
             </div>
         `).join("");
 
         document.querySelectorAll(".choose-favourite-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
-                const lat = parseFloat(btn.dataset.lat);
-                const lon = parseFloat(btn.dataset.lon);
-                const elevation_m = parseInt(btn.dataset.elevation, 10);
+                const idx = parseInt(btn.dataset.index, 10);
+                const fav = favourites[idx];
+                if (!fav) return;
+
+                const lat = parseFloat(fav.latitude);
+                const lon = parseFloat(fav.longitude);
+                const elevation_m = parseInt(fav.elevation_m, 10);
 
                 try {
                     const meta = await fetchLocationMeta(lat, lon);
 
                     const locationData = {
-                        display_name: btn.dataset.name,
+                        display_name: getPlaceLabel(fav.name),
                         lat,
                         lon,
                         elevation_m,
@@ -384,12 +432,23 @@ async function loadFavouriteLocationsIntoPanel() {
                     closeLocationPanel();
                 } catch (error) {
                     const display = document.getElementById("global-location-display");
-                    if (display) display.textContent = `Error: ${error.message}`;
+                    if (display) display.textContent = `Error loading favourite: ${error.message}`;
                 }
+            });
+        });
+
+        document.querySelectorAll(".delete-favourite-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const idx = parseInt(btn.dataset.index, 10);
+                const fav = favourites[idx];
+                if (!fav) return;
+
+                await deleteFavouriteFromPanel(fav.id, getPlaceLabel(fav.name));
             });
         });
     } catch (error) {
         container.innerHTML = `<p>Error loading favourites: ${error.message}</p>`;
+        console.error("Failed to load favourites:", error);
     }
 }
 

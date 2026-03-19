@@ -43,7 +43,7 @@ def _default_eval_time_utc(local_day: date) -> datetime:
 
 def compute_daily_lunar_summary(*, lat, lon, elevation_m, local_day, tz_name):
     sunrise_utc, sunset_utc, moonrise_utc, moonset_utc = _find_daily_events(
-        lat, lon, local_day
+        lat, lon, local_day, tz_name
     )
 
     eval_time_utc = _default_eval_time_utc(local_day)

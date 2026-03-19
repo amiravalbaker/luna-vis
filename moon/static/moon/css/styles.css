@@ -5,6 +5,10 @@ body {
     background: #112f65;
 }
 
+:root {
+    --site-header-height: 3.5rem;
+}
+
 .app-background {
     min-height: 100vh;
     background-image: url("../img/background/hero_short.jpg");
@@ -25,7 +29,8 @@ body {
     background: rgba(17, 47, 101, 0.35 );
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 1rem 1.25rem;
+    min-height: var(--site-header-height);
+    padding: 0.5rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -38,6 +43,23 @@ body {
     margin: 0;
     font-size: 1.4rem;
     color: #e9e6f4;
+}
+
+.site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.site-logo {
+    height: 3.5em;
+    width: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 8px;
 }
 
 .main-nav {
@@ -56,7 +78,7 @@ body {
 .page-content {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 7.5rem 1rem 2rem;
+    padding: 5.5rem 1rem 2rem;
 }
 
 /* General Cards */
@@ -76,6 +98,15 @@ body {
 .moon-hero-card {
     text-align: center;
     padding: 1.5rem;
+}
+
+.visibility-hero-card {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
 }
 
 .hero-top-row {
@@ -163,22 +194,6 @@ body {
     gap: 1rem;
 }
 
-.daily-row {
-    display: grid;
-    gap: 0.9rem;
-}
-
-.daily-row-times {
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-}
-
-.daily-row-angles {
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-}
-.daily-row-final {
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-}
-
 .data-item {
     background: rgba(104, 94, 174, 0.18);
     border-radius: 14px;
@@ -200,6 +215,11 @@ body {
     height: 28px;
     margin-bottom: 0.4rem; 
     object-fit: contain;
+}
+
+.data-icon-img-sun-event {
+    width: 40px;
+    height: 40px;
 }
 
 .data-label {
@@ -264,6 +284,10 @@ button:hover {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+}
+
+.button-row > button {
+    flex: 0 0 auto;
 }
 
 .results-table {
@@ -345,6 +369,8 @@ button:hover {
     background: rgba(17, 47, 101, 0.92);
     width: 100%;
     max-width: 700px;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
     border-radius: 18px;
     padding: 1.5rem;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
@@ -363,6 +389,36 @@ button:hover {
     margin-top: 1.5rem;
 }
 
+#location-favourites-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.favourite-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.choose-favourite-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+}
+
+.delete-favourite-btn {
+    white-space: nowrap;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    background: #94485e;
+}
+
+.delete-favourite-btn:hover {
+    background: #7a3b4d;
+}
+
 
 .hidden {
     display: none;
@@ -374,33 +430,7 @@ button:hover {
     opacity: 0.8;
 }
 
-.date-window-left {
-    text-align: left;
-}
-
-.date-window-right {
-    text-align: right;
-}
-
-.visibility-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(160px, 1fr));
-    gap: 0.9rem;
-}
-
 @media (max-width: 768px) {
-    .daily-row-times {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
-    }
-
-    .daily-row-angles {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
-    }
-
-    .daily-row-final {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
-    }
-
     .hero-top-row {
         flex-direction: column;
         align-items: flex-start;
@@ -410,17 +440,9 @@ button:hover {
         text-align: left;
     }
 
-    .page-content {
-        padding-top: 8.5rem;
-    }
-
     .hero-note-row {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .date-window-note-right {
-        text-align: left;
     }
 
     .hero-arrow-row {
@@ -436,9 +458,5 @@ button:hover {
 
     .moon-phase-image {
         width: 150px;
-    }
-
-    .visibility-summary-grid {
-        grid-template-columns: repeat(2, minmax(140px, 1fr));
     }
 }

@@ -15,6 +15,10 @@ function getRefreshToken() {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
+function hasRefreshSession() {
+    return !!getRefreshToken();
+}
+
 function clearAuth() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -37,13 +41,17 @@ function getCurrentUser() {
 }
 
 function isLoggedIn() {
-    return !!getAccessToken();
+    return !!getAccessToken() || hasRefreshSession() || !!getCurrentUser();
 }
 
 async function authenticatedApiGet(url) {
     let token = getAccessToken();
     if (!token) {
-        throw new Error("Not logged in.");
+        if (hasRefreshSession()) {
+            token = await refreshAccessToken();
+        } else {
+            throw new Error("Not logged in.");
+        }
     }
 
     try {
@@ -88,7 +96,11 @@ async function apiPost(url, body, token = null) {
 async function authenticatedApiPost(url, body) {
     let token = getAccessToken();
     if (!token) {
-        throw new Error("Not logged in.");
+        if (hasRefreshSession()) {
+            token = await refreshAccessToken();
+        } else {
+            throw new Error("Not logged in.");
+        }
     }
 
     try {
@@ -127,7 +139,11 @@ async function apiDelete(url, token = null) {
 async function authenticatedApiDelete(url) {
     let token = getAccessToken();
     if (!token) {
-        throw new Error("Not logged in.");
+        if (hasRefreshSession()) {
+            token = await refreshAccessToken();
+        } else {
+            throw new Error("Not logged in.");
+        }
     }
 
     try {

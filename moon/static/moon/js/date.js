@@ -31,6 +31,7 @@ function formatDateLong(dateString) {
     return `${dayNum} ${monthName} ${yearNum}`;
 }
 
+
 /* -------------------------
    STORAGE
 -------------------------- */
@@ -150,13 +151,11 @@ function populateGlobalDateFields() {
     const display = document.getElementById("global-date-display");
 
     const selectedDate = loadSelectedDate();
-    const anchorDate = loadAnchorDate();
 
     if (dateInput) dateInput.value = selectedDate;
 
     if (display) {
-        display.textContent =
-            `Current date: ${formatDateLong(selectedDate)} (browse ±${DATE_WINDOW_DAYS} days from ${formatDateLong(anchorDate)})`;
+        display.textContent = `Current date: ${formatDateLong(selectedDate)}`;
     }
 }
 
@@ -222,7 +221,7 @@ function renderSelectedDateSummary(elementId = "selected-date-summary") {
     if (!el) return;
 
     const date = loadSelectedDate();
-    el.innerHTML = `<strong>Date:</strong> ${formatDateLong(date)}`;
+    el.innerHTML = `<strong>Selected Date:</strong> ${formatDateLong(date)}`;
 }
 
 /* -------------------------

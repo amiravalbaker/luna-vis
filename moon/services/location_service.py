@@ -21,33 +21,43 @@ def get_timezone_from_coords(lat: float, lon: float) -> str:
 
 def timezone_label(tz_name: str) -> str:
     """
-    Return a human-friendly timezone label like:
-    Malaysia Time (UTC+8)
-    British Time (UTC+0)
+    Return an astronomy-format timezone label like:
+    London (winter) (UTC+0)
+    KualaLumpur (UTC+8)
     """
 
     try:
         tz = ZoneInfo(tz_name)
         now = datetime.now(tz)
 
+        # Get UTC offset
         offset = now.utcoffset()
         total_seconds = offset.total_seconds()
         hours = int(total_seconds // 3600)
         minutes = int((abs(total_seconds) % 3600) // 60)
 
+        sign = "+" if hours >= 0 else "-"
         if minutes:
             offset_str = f"UTC{sign}{abs(hours)}:{minutes:02d}"
         else:
             offset_str = f"UTC{sign}{abs(hours)}"
 
-        sign = "+" if hours >= 0 else "-"
-        
-
         # Extract city name from timezone
         parts = tz_name.split("/")
         city = parts[-1].replace("_", " ")
 
-        return f"{city} Time ({offset_str})"
+        # Determine season (Northern/Southern hemisphere)
+        month = now.month
+        if month in (12, 1, 2):
+            season = "winter"
+        elif month in (3, 4, 5):
+            season = "spring"
+        elif month in (6, 7, 8):
+            season = "summer"
+        else:  # 9, 10, 11
+            season = "autumn"
+
+        return f"{city} ({season}) ({offset_str})"
 
     except Exception:
         return tz_name

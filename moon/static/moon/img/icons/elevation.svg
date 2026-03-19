@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Elevation</title>
+  <path d="M8 50l16-20 10 12 8-10 14 18z" fill="#4fa67a"/>
+  <path d="M20 50h24" stroke="#e9f8ef" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 46V18M32 18l-6 6M32 18l6 6" stroke="#e9f8ef" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

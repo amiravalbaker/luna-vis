@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, UTC, time, date as date_type
 
 from skyfield.api import Loader
 from skyfield import almanac
@@ -54,8 +54,6 @@ def _find_phase_events_between(start_utc: datetime, end_utc: datetime) -> list[L
         )
 
     return events
-
-
 def get_surrounding_phase_events(at_utc: datetime) -> tuple[LunarPhaseEvent, LunarPhaseEvent]:
     """
     Find the previous and next major lunar phase events around the given datetime.
@@ -84,6 +82,20 @@ def get_surrounding_phase_events(at_utc: datetime) -> tuple[LunarPhaseEvent, Lun
         raise ValueError("No next lunar phase event found.")
 
     return previous_event, next_event
+
+
+
+def find_new_moon_on_date(day: date_type) -> datetime | None:
+    start_utc = datetime.combine(day, time.min, tzinfo=UTC)
+    end_utc = start_utc + timedelta(days=1)
+
+    events = _find_phase_events_between(start_utc, end_utc)
+
+    for event in events:
+        if event.phase_index == 0:
+            return event.time_utc
+
+    return None
 
 
 def find_previous_new_moon(before_utc: datetime) -> datetime:

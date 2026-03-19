@@ -4,57 +4,53 @@
 {% block title %}Daily Moon Data - LunaVis{% endblock %}
 
 {% block content %}
-<section class="card moon-hero-card">
-    <div class="hero-top-row">
-        <div id="selected-location-summary" class="hero-meta"></div>
-        <div id="selected-date-summary" class="hero-meta hero-meta-right"></div>
+<div class="container-fluid px-0">
+    <div class="row g-3">
+        <div class="col-12">
+            <section class="card moon-hero-card mb-0">
+                <div class="hero-arrow-row">
+                    <button type="button" id="prev-date-btn" class="icon-button hero-arrow-btn">←</button>
+
+                    <div class="moon-hero-center">
+                        <img id="moon-phase-image"
+                             src="{% static 'moon/img/moon-placeholder.png' %}"
+                             alt="Moon phase"
+                             class="moon-phase-image">
+                        <div id="moon-phase-summary" class="moon-phase-summary"></div>
+                    </div>
+
+                    <button type="button" id="next-date-btn" class="icon-button hero-arrow-btn">→</button>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card hidden-form-card mb-0">
+                <form id="daily-form" class="form-grid">
+                    <label>
+                        Date
+                        <input type="date" id="date" required>
+                    </label>
+
+                    <label>
+                        Timezone
+                        <input type="text" id="tz" value="Europe/London" required>
+                    </label>
+
+                    <button type="submit">Get Moon Data</button>
+                </form>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <h2>Daily Moon Data</h2>
+                <div id="status"></div>
+                <div id="results" class="daily-data-grid"></div>
+            </section>
+        </div>
     </div>
-
-    <!--<div class="hero-note-row">
-        <div class="date-window-note date-window-note-left">
-            Browse up to 16 days earlier
-        </div>
-        <div class="date-window-note date-window-note-right">
-            Browse up to 16 days later
-        </div>
-    </div>-->
-
-    <div class="hero-arrow-row">
-        <button type="button" id="prev-date-btn" class="icon-button hero-arrow-btn">←</button>
-
-        <div class="moon-hero-center">
-            <img id="moon-phase-image"
-                 src="{% static 'moon/img/moon-placeholder.png' %}"
-                 alt="Moon phase"
-                 class="moon-phase-image">
-            <div id="moon-phase-summary" class="moon-phase-summary"></div>
-        </div>
-
-        <button type="button" id="next-date-btn" class="icon-button hero-arrow-btn">→</button>
-    </div>
-</section>
-
-<section class="card hidden-form-card">
-    <form id="daily-form" class="form-grid">
-        <label>
-            Date
-            <input type="date" id="date" required>
-        </label>
-
-        <label>
-            Timezone
-            <input type="text" id="tz" value="Europe/London" required>
-        </label>
-
-        <button type="submit">Get Moon Data</button>
-    </form>
-</section>
-
-<section class="card">
-    <h2>Daily Moon Data</h2>
-    <div id="status"></div>
-    <div id="results" class="daily-data-grid"></div>
-</section>
+</div>
 
 <script src="{% static 'moon/js/daily.js' %}"></script>
 {% endblock %}

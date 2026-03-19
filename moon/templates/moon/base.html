@@ -5,11 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LunaVis{% endblock %}</title>
     {% load static %}
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'moon/css/styles.css' %}">
 </head>
 <body class="app-background">
     <header class="site-header">
-        <h1>LunaVis</h1>
+        <a href="/" class="site-brand">
+            <img src="{% static 'moon/img/luna-vis-logo.jpeg' %}"
+                 alt="LunaVis Logo"
+                 class="site-logo"
+                 width="48"
+                 height="48">
+        </a>
+
+        <!-- <h1>LunaVis</h1> -->
 
         <nav class="main-nav">
             <button type="button" id="calendar-toggle-btn" class="link-button">
@@ -65,6 +77,7 @@
                     <button type="button" id="global-find-location-btn">Find place</button>
                     <button type="button" id="global-use-my-location-btn">Use my location</button>
                     <button type="button" id="global-clear-location-btn">Clear</button>
+                    <button type="button" id="save-location-favourite-btn" class="hidden">Add to favourites</button>
                 </div>
 
                 <div id="global-location-display"></div>
@@ -81,10 +94,6 @@
             </div>
 
             <div id="location-auth-section" class="hidden">
-                <div class="button-row">
-                    <button type="button" id="save-location-favourite-btn">Save current location to favourites</button>
-                </div>
-
                 <div class="favourites-section">
                     <h3>Saved Favourite Locations</h3>
                     <div id="location-favourites-list"></div>
@@ -103,6 +112,7 @@
             <div class="form-grid">
                 <div id="auth-nav-panel"></div>
 
+                <a href="/about/">About</a>
                 <a href="/">Daily</a>
                 <a href="/visibility/">New Moon Visibility</a>
                 <a href="/observations/">Observation Log</a>
@@ -112,10 +122,19 @@
     </div>
 
 
-    <main class="page-content">
+    <main class="page-content pb-5">
         {% block content %}{% endblock %}
     </main>
 
+    <footer class="fixed-bottom d-flex justify-content-around align-items-center py-2 px-3 bg-dark bg-opacity-75 border-top border-light-subtle" aria-label="Primary navigation">
+        <a href="/" class="text-decoration-none text-light fw-semibold small">Daily</a>
+        <a href="/visibility/" class="text-decoration-none text-light fw-semibold small">Visibility</a>
+        <a href="/observations/" class="text-decoration-none text-light fw-semibold small">Observations</a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
     <script src="{% static 'moon/js/api.js' %}"></script>
     <script src="{% static 'moon/js/auth.js' %}"></script>
     <script src="{% static 'moon/js/date.js' %}"></script>
