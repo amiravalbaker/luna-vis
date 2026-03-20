@@ -51,6 +51,27 @@ from django.db import transaction
 import secrets
 
 
+def _select_active_new_moon_for_visibility(selected_dt_utc, threshold_days=5):
+    """
+    Use the most recent conjunction for up to `threshold_days` after it.
+    After that threshold, switch to the next conjunction.
+    """
+    previous_new_moon_utc = find_previous_new_moon(selected_dt_utc + timedelta(seconds=1))
+    next_new_moon_utc = find_next_new_moon(selected_dt_utc)
+
+    days_since_previous = (selected_dt_utc - previous_new_moon_utc).total_seconds() / 86400.0
+    if days_since_previous <= threshold_days:
+        return previous_new_moon_utc
+    return next_new_moon_utc
+
+
+def _visibility_switch_threshold_days():
+    try:
+        return max(0, int(getattr(settings, "VISIBILITY_NEW_MOON_SWITCH_DAYS", 5)))
+    except (TypeError, ValueError):
+        return 5
+
+
 class EmailVerifiedTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -117,9 +138,12 @@ def visibility_view(request):
 
     selected_dt_utc = datetime.combine(selected_date, time(12, 0), tzinfo=UTC)
 
-    # If selected date is itself a new moon date, use that lunation.
-    same_day_new_moon_utc = find_new_moon_on_date(selected_date)
-    active_new_moon_utc = same_day_new_moon_utc or find_next_new_moon(selected_dt_utc)
+    # UX rule: only switch to the upcoming conjunction if we are > 5 days past
+    # the most recent conjunction relative to the selected date.
+    active_new_moon_utc = _select_active_new_moon_for_visibility(
+        selected_dt_utc,
+        threshold_days=_visibility_switch_threshold_days(),
+    )
 
     visibility_anchor_date = active_new_moon_utc.date()
 
@@ -194,9 +218,12 @@ def visibility_window_view(request):
 
     selected_dt_utc = datetime.combine(selected_start_date, time(12, 0), tzinfo=UTC)
 
-    #If selected date is itself a new moon date, use that lunation.
-    same_day_new_moon_utc = find_new_moon_on_date(selected_start_date)
-    active_new_moon_utc = same_day_new_moon_utc or find_next_new_moon(selected_dt_utc)
+    # UX rule: only switch to the upcoming conjunction if we are > 5 days past
+    # the most recent conjunction relative to the selected date.
+    active_new_moon_utc = _select_active_new_moon_for_visibility(
+        selected_dt_utc,
+        threshold_days=_visibility_switch_threshold_days(),
+    )
 
     visibility_anchor_date = active_new_moon_utc.date()
 

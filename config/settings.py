@@ -57,7 +57,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool("DEBUG", False)
+DEBUG = env_bool("DEBUG", True)
 
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", '.herokuapp.com' ])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
@@ -201,3 +201,7 @@ EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 30))
 
 # Frontend URL for links in emails
 FRONTEND_URL = env_str("FRONTEND_URL", "http://localhost:3000")
+
+# Visibility UX tuning: keep current conjunction for this many days,
+# then switch to the upcoming conjunction for visibility computations.
+VISIBILITY_NEW_MOON_SWITCH_DAYS = int(os.environ.get("VISIBILITY_NEW_MOON_SWITCH_DAYS", 5))
