@@ -29,6 +29,11 @@ def env_list(name: str, default=None):
         return list(default or [])
     return [item.strip() for item in raw.split(",") if item.strip()]
 
+
+def append_unique(values, extra):
+    if extra not in values:
+        values.append(extra)
+
 if os.path.isfile('env.py'):
     import env
 
@@ -46,8 +51,13 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_bool("DEBUG", False)
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", '.herokuapp.com' ])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
+
+# Heroku fallback: avoid 400 Bad Request when env vars are not yet configured.
+if os.environ.get("DYNO"):
+    append_unique(ALLOWED_HOSTS, ".herokuapp.com")
+    append_unique(CSRF_TRUSTED_ORIGINS, "https://*.herokuapp.com")
 
 
 # Application definition
