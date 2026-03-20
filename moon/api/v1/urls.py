@@ -10,6 +10,12 @@ from .views import (
     register_view,
     me_view,
     location_meta_view,
+     send_verification_email_view,
+     verify_email_view,
+     resend_verification_email_view,
+     password_reset_request_view,
+     password_reset_confirm_view,
+    test_email_view,
 )
 
 urlpatterns = [
@@ -22,4 +28,10 @@ urlpatterns = [
     path("register/", register_view, name="api-register"),
     path("me/", me_view, name="api-me"),
     path("location-meta/", location_meta_view, name="api-location-meta"),
+     path("auth/send-verification-email/", send_verification_email_view, name="api-send-verification-email"),
+     path("auth/verify-email/", verify_email_view, name="api-verify-email"),
+     path("auth/resend-verification-email/", resend_verification_email_view, name="api-resend-verification-email"),
+     path("auth/password-reset-request/", password_reset_request_view, name="api-password-reset-request"),
+     path("auth/password-reset-confirm/", password_reset_confirm_view, name="api-password-reset-confirm"),
+    path("auth/test-email/", test_email_view, name="api-test-email"),
 ]

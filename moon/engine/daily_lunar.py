@@ -48,7 +48,7 @@ def compute_daily_lunar_summary(*, lat, lon, elevation_m, local_day, tz_name):
 
     eval_time_utc = _default_eval_time_utc(local_day)
 
-    sun_alt_deg, sun_az_deg, moon_alt_deg, moon_az_deg, elongation_deg, moon_distance_km, phase_angle_deg, illumination_fraction = _alt_az_at(
+    sun_alt_deg, sun_az_deg, moon_alt_deg, moon_az_deg, elongation_deg, moon_distance_km, phase_angle_deg, illumination_fraction, _topocentric_crescent_width_deg, _topocentric_crescent_width_arcmin = _alt_az_at(
         lat,
         lon,
         elevation_m,

@@ -312,7 +312,7 @@ IMAGES
 
 function getMoonImageForAgeHours(ageHours) {
     if (ageHours == null) {
-        return "/static/moon/img/moon-placeholder.jpg";
+        return "/static/moon/img/moon-day-07.png";
     }
 
     const synodicDays = 29.53;
@@ -322,7 +322,7 @@ function getMoonImageForAgeHours(ageHours) {
     if (index < 1) index = 1;
     if (index > 29) index = 29;
 
-    return `/static/moon/img/moon-day-${String(index).padStart(2, "0")}.jpg`;
+    return `/static/moon/img/moon-day-${String(index).padStart(2, "0")}.png`;
 }
 
 function updateMoonPhaseImage(data) {

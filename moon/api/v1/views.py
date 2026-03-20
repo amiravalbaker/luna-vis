@@ -6,12 +6,16 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from datetime import datetime, time, UTC, timedelta
 
 from yaml import serializer
 from moon.engine.phase import find_previous_new_moon, find_next_new_moon, find_new_moon_on_date
 from moon.models import Observation, FavouriteLocation
+from moon.models import UserProfile, EmailVerificationToken, PasswordResetToken
 from moon.services.observation_services import create_observation_with_analysis
 from moon.services.daily_service import get_daily_lunar_data
 from moon.services.visibility_service import (get_visibility_for_date,get_visibility_window,  
@@ -35,7 +39,31 @@ from .serializers import (
     RegisterSerializer,
     MeSerializer,
     LocationMetaQuerySerializer,
+     VerifyEmailSerializer,
+     PasswordResetRequestSerializer,
+     PasswordResetConfirmSerializer,
+     ResendVerificationEmailSerializer,
     )
+
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db import transaction
+import secrets
+
+
+class EmailVerifiedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if settings.DEBUG:
+            return data
+        profile = UserProfile.objects.filter(user=self.user).first()
+        if not profile or not profile.email_verified:
+            raise AuthenticationFailed("Email is not verified. Please verify your email before logging in.")
+        return data
+
+
+class EmailVerifiedTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailVerifiedTokenObtainPairSerializer
 
 
 @api_view(["GET"])
@@ -299,7 +327,24 @@ def register_view(request):
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    user = serializer.save()
+    email_send_failed = False
+    with transaction.atomic():
+        user = serializer.save()
+        UserProfile.objects.get_or_create(user=user)
+        try:
+            _send_verification_email(user)
+        except Exception:
+            if not settings.DEBUG:
+                raise
+            email_send_failed = True
+
+    if email_send_failed:
+        detail_message = (
+            "Account created, but verification email could not be sent in development mode. "
+            "Please check SMTP settings before production."
+        )
+    else:
+        detail_message = "Verification email sent. Please check your inbox."
 
     refresh = RefreshToken.for_user(user)
 
@@ -309,13 +354,14 @@ def register_view(request):
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
+                "email_verified": False,
             },
             "refresh": str(refresh),
             "access": str(refresh.access_token),
+            "detail": detail_message,
         },
         status=status.HTTP_201_CREATED,
     )
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -333,3 +379,214 @@ def location_meta_view(request):
 
     meta = get_location_metadata(data["lat"], data["lon"])
     return Response(meta)
+
+
+def _send_verification_email(user):
+    """Generate and send email verification token."""
+    token = secrets.token_urlsafe(32)
+    EmailVerificationToken.objects.filter(user=user).delete()
+    EmailVerificationToken.objects.create(user=user, token=token)
+
+    verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+    send_mail(
+        subject="Verify your LunaVis email",
+        message=f"Click the link to verify your email: {verification_url}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+    return token
+
+
+def _send_password_reset_email(user):
+    """Generate and send password reset token."""
+    token = secrets.token_urlsafe(32)
+    PasswordResetToken.objects.create(user=user, token=token)
+
+    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    send_mail(
+        subject="Reset your LunaVis password",
+        message=f"Click the link to reset your password: {reset_url}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+    return token
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def send_verification_email_view(request):
+    """Send email verification link to current user."""
+    user = request.user
+    try:
+        _send_verification_email(user)
+        return Response(
+            {"detail": f"Verification email sent to {user.email}"},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to send email: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def test_email_view(request):
+    """Send a test email to the currently authenticated user."""
+    user = request.user
+    recipient = user.email
+
+    if not recipient:
+        return Response(
+            {"detail": "Current user does not have an email address."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
+        return Response(
+            {
+                "detail": (
+                    "SMTP is not configured: set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD "
+                    "(for Gmail, use an App Password)."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        send_mail(
+            subject="LunaVis SMTP Test",
+            message=(
+                "This is a test email from LunaVis.\n\n"
+                f"Backend: {settings.EMAIL_BACKEND}\n"
+                f"Host: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}\n"
+                f"TLS: {settings.EMAIL_USE_TLS} | SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}\n"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient],
+            fail_silently=False,
+        )
+        return Response(
+            {"detail": f"Test email sent to {recipient}."},
+            status=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"SMTP test failed: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_email_view(request):
+    """Verify email using token."""
+    serializer = VerifyEmailSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    token = serializer.validated_data["token"]
+
+    try:
+        email_token = EmailVerificationToken.objects.get(token=token)
+        user = email_token.user
+        
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.email_verified = True
+        profile.save()
+        
+        email_token.delete()
+        
+        return Response(
+            {"detail": "Email verified successfully"},
+            status=status.HTTP_200_OK
+        )
+    except EmailVerificationToken.DoesNotExist:
+        return Response(
+            {"error": "Invalid or expired verification token"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def resend_verification_email_view(request):
+    """Resend verification email."""
+    serializer = ResendVerificationEmailSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data["email"]
+
+    try:
+        user = User.objects.get(email=email)
+        _send_verification_email(user)
+        return Response(
+            {"detail": f"Verification email sent to {email}"},
+            status=status.HTTP_200_OK
+        )
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User with that email not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to send email: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_request_view(request):
+    """Request password reset token."""
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data["email"]
+
+    try:
+        user = User.objects.get(email=email)
+        _send_password_reset_email(user)
+        return Response(
+            {"detail": f"Password reset email sent to {email}"},
+            status=status.HTTP_200_OK
+        )
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User with that email not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to send email: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_confirm_view(request):
+    """Confirm password reset with token."""
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    token = serializer.validated_data["token"]
+    new_password = serializer.validated_data["password"]
+
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token)
+        user = reset_token.user
+        
+        user.set_password(new_password)
+        user.save()
+        
+        PasswordResetToken.objects.filter(user=user).delete()
+        
+        return Response(
+            {"detail": "Password reset successfully"},
+            status=status.HTTP_200_OK
+        )
+    except PasswordResetToken.DoesNotExist:
+        return Response(
+            {"error": "Invalid or expired reset token"},
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -26,6 +26,9 @@ class ObservationContext:
     arcv_deg: float
     arcl_deg: float
 
+    topocentric_crescent_width_deg: float
+    topocentric_crescent_width_arcmin: float
+
     lag_minutes: Optional[int]
     moon_age_hours: Optional[float] = None
     illumination: Optional[float] = None

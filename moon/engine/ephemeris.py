@@ -156,9 +156,21 @@ def _alt_az_at(
 
     # Approximate phase angle using elongation
     phase_angle_deg =float(elongation_deg)
+    phase_angle_rad = math.radians(phase_angle_deg)
 
     # Illuminated fraction approximation
     illumination_fraction = (1.0 - math.cos(math.radians(phase_angle_deg))) / 2.0
+
+    # Topocentric apparent lunar semidiameter
+    mean_moon_radius_km = 1737.4
+    moon_distance_km = float(moon_distance.km)
+
+    semidiameter_rad = mean_moon_radius_km / moon_distance_km
+    semidiameter_deg = math.degrees(semidiameter_rad)
+
+    # Topocentric crescent width
+    topocentric_crescent_width_deg = semidiameter_deg * (1.0 - math.cos(phase_angle_rad))
+    topocentric_crescent_width_arcmin = topocentric_crescent_width_deg * 60.0
 
     return (
         float(sun_alt.degrees),
@@ -169,6 +181,8 @@ def _alt_az_at(
         float(moon_distance.km),
         float(phase_angle_deg),
         float(illumination_fraction),
+        float(topocentric_crescent_width_deg),
+        float(topocentric_crescent_width_arcmin),
     )
 
 
@@ -196,7 +210,7 @@ def _build_context_at_time(
     sunset_utc: datetime,
     moonset_utc: Optional[datetime],
 ):
-    sun_alt, sun_az, moon_alt, moon_az, elongation_deg, moon_distance_km, phase_angle_deg, illumination_fraction = _alt_az_at(
+    sun_alt, sun_az, moon_alt, moon_az, elongation_deg, moon_distance_km, phase_angle_deg, illumination_fraction, topocentric_crescent_width_deg, topocentric_crescent_width_arcmin = _alt_az_at(
         lat=lat,
         lon=lon,
         elevation_m=elevation_m,
@@ -231,6 +245,8 @@ def _build_context_at_time(
         lag_minutes=lag_minutes,
         moon_age_hours=None,
         illumination=illumination_fraction,
+        topocentric_crescent_width_deg=topocentric_crescent_width_deg,
+        topocentric_crescent_width_arcmin=topocentric_crescent_width_arcmin,
     )
 
 

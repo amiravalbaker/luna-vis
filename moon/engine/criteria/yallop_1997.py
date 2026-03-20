@@ -7,13 +7,12 @@ class Yallop1997:
     id = "yallop_1997"
     name = "Yallop (1997)"
 
-    def _approx_crescent_width_arcmin(self, ctx: ObservationContext) -> float:
-        # First-pass approximation using constant 15' semidiameter.
-        return 15.0 * (1.0 - math.cos(math.radians(ctx.arcl_deg)))
+    def _crescent_width_arcmin(self, ctx: ObservationContext) -> float:
+        return ctx.topocentric_crescent_width_arcmin
 
 
     def _q_value(self, ctx: ObservationContext) -> float:
-        w = self._approx_crescent_width_arcmin(ctx)
+        w = self._crescent_width_arcmin(ctx)
         return (
             ctx.arcv_deg
             - (11.8371 - 6.3226 * w + 0.7319 * w**2 - 0.1018 * w**3)
@@ -22,7 +21,7 @@ class Yallop1997:
 
 
     def evaluate(self, ctx: ObservationContext) -> CriterionResult:
-        w = self._approx_crescent_width_arcmin(ctx)
+        w = self._crescent_width_arcmin(ctx)
         q = self._q_value(ctx)
 
         if q > 0.216:
@@ -69,8 +68,8 @@ class Yallop1997:
                 "arcv_deg": ctx.arcv_deg,
                 "arcl_deg": ctx.arcl_deg,
                 "daz_deg": ctx.daz_deg,
-                "approx_width_arcmin": w,
                 "q": q,
+                "topocentric_width_arcmin": w,
             },
         )
     

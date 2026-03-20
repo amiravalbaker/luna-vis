@@ -248,8 +248,22 @@ function updateAuthPanel() {
     if (user) {
         panel.innerHTML = `
             <div><strong>Signed in as:</strong> ${user.username}</div>
+            <button id="settings-test-email-btn" class="link-button" type="button">Send test email</button>
+            <div id="settings-test-email-status"></div>
             <button id="settings-logout-btn" class="link-button" type="button">Logout</button>
         `;
+
+        document.getElementById("settings-test-email-btn")?.addEventListener("click", async () => {
+            const statusEl = document.getElementById("settings-test-email-status");
+            if (statusEl) statusEl.textContent = "Sending test email...";
+
+            try {
+                const data = await authenticatedApiPost("/api/v1/auth/test-email/", {});
+                if (statusEl) statusEl.textContent = data.detail || "Test email sent.";
+            } catch (error) {
+                if (statusEl) statusEl.textContent = `Error: ${error.message}`;
+            }
+        });
 
         document.getElementById("settings-logout-btn")?.addEventListener("click", logoutUser);
     } else {
