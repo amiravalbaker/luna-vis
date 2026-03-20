@@ -22,6 +22,18 @@
     </form>
 
     <div id="login-status"></div>
+
+    <hr>
+
+    <section class="form-grid" aria-label="Resend verification email">
+        <h3>Didn't verify your email?</h3>
+        <label>
+            Email
+            <input type="email" id="verification-email" placeholder="you@example.com">
+        </label>
+        <button type="button" id="resend-verification-btn">Resend verification email</button>
+        <div id="verification-status"></div>
+    </section>
 </section>
 
 <script src="{% static 'moon/js/login.js' %}"></script>
