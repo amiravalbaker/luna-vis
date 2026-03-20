@@ -23,17 +23,17 @@
 
         <!-- <h1>LunaVis</h1> -->
 
-        <nav class="main-nav mb-6" aria-label="Primary navigation">
-            <button type="button" id="calendar-toggle-btn" class="link-button">
-                📅 <span id="current-date-label">Set Date</span>
+        <nav class="main-nav d-flex flex-nowrap align-items-center ms-auto gap-1 gap-sm-2" aria-label="Primary navigation">
+            <button type="button" id="calendar-toggle-btn" class="link-button d-inline-flex align-items-center px-1 px-sm-2">
+                <span aria-hidden="true">📅</span> <span id="current-date-label" class="d-none d-md-inline">Set Date</span>
             </button>
 
-            <button type="button" id="location-toggle-btn" class="link-button">
-                📍 <span id="current-location-label">Set Location</span>
+            <button type="button" id="location-toggle-btn" class="link-button d-inline-flex align-items-center px-1 px-sm-2">
+                <span aria-hidden="true">📍</span> <span id="current-location-label" class="d-none d-md-inline">Set Location</span>
             </button>
 
-            <button type="button" id="settings-toggle-btn" class="icon-button" title="Settings">
-                ⚙ <span>Settings</span>
+            <button type="button" id="settings-toggle-btn" class="icon-button px-2 px-sm-3" title="Settings">
+                <span aria-hidden="true">⚙</span> <span class="d-none d-md-inline">Settings</span>
             </button>
         </nav>
     </header>
