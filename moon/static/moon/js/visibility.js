@@ -118,7 +118,6 @@ function renderVisibilitySummaryCards(data, windowData) {
     const tz = document.getElementById("tz")?.value || "UTC";
     const location = loadSelectedLocation();
     const firstConsensusDate = getFirstConsensusDate(windowData);
-    const firstConsensusMoonAge = getFirstConsensusMoonAge(windowData);
 
     container.innerHTML = `
         <div class="row g-3">
@@ -182,7 +181,7 @@ function renderVisibilitySummaryCards(data, windowData) {
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
                     <div class="data-label">Moon Age @ Sunset</div>
-                    <div class="data-value">${formatMoonAge(firstConsensusMoonAge)}</div>
+                    <div class="data-value">${formatMoonAge(data?.moon_age_hours)}</div>
                 </div>
             </div>
 

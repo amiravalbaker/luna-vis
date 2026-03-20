@@ -17,11 +17,6 @@ function setDefaultObservationTime() {
     input.value = localValue;
 }
 
-function toIsoUtc(localDateTimeString) {
-    const date = new Date(localDateTimeString);
-    return date.toISOString();
-}
-
 async function loadObservations() {
     const container = document.getElementById("observations-list");
 
@@ -97,7 +92,7 @@ async function handleObservationSubmit(event) {
             longitude: parseFloat(lon),
             elevation_m: parseInt(elevation_m, 10),
             sky_condition,
-            observation_time: toIsoUtc(observation_time),
+            observation_time,
             time_spent_searching_minutes: parseInt(time_spent_searching_minutes, 10),
             visible,
             detection_method,

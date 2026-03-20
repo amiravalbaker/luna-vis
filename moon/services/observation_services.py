@@ -1,4 +1,5 @@
 from datetime import UTC
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from moon.engine.ephemeris import compute_context_at_time
 from moon.engine.phase import moon_age_hours
@@ -22,10 +23,18 @@ def create_observation_with_analysis(
     notes: str = "",
     tz_name: str = "UTC",
 ):
-    if observation_time.tzinfo is None:
-        observation_time = observation_time.replace(tzinfo=UTC)
+    try:
+        observation_tz = ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        observation_tz = UTC
 
-    local_day = observation_time.date()
+    if observation_time.tzinfo is None:
+        # Interpret naive client datetime as local time at the selected observation timezone.
+        observation_time = observation_time.replace(tzinfo=observation_tz)
+
+    observation_time = observation_time.astimezone(UTC)
+
+    local_day = observation_time.astimezone(observation_tz).date()
 
     observation = Observation.objects.create(
         user=user,
