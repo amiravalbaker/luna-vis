@@ -1,0 +1,17 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}Verify Email - LunaVis{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h2>Email Verification</h2>
+    <p id="verify-email-status">Verifying your email...</p>
+    <div class="button-row">
+        <a href="/login/" class="icon-button text-decoration-none">Go to Login</a>
+        <a href="/register/" class="icon-button text-decoration-none">Create Account</a>
+    </div>
+</section>
+
+<script src="{% static 'moon/js/verify_email.js' %}"></script>
+{% endblock %}

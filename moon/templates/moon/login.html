@@ -34,6 +34,18 @@
         <button type="button" id="resend-verification-btn">Resend verification email</button>
         <div id="verification-status"></div>
     </section>
+
+    <hr>
+
+    <section class="form-grid" aria-label="Password reset request">
+        <h3>Forgot your password?</h3>
+        <label>
+            Email
+            <input type="email" id="reset-email" placeholder="you@example.com">
+        </label>
+        <button type="button" id="request-reset-btn">Send password reset email</button>
+        <div id="reset-request-status"></div>
+    </section>
 </section>
 
 <script src="{% static 'moon/js/login.js' %}"></script>

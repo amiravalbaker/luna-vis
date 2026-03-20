@@ -48,6 +48,26 @@ async function handleResendVerificationClick() {
     }
 }
 
+async function handleResetRequestClick() {
+    const emailInput = document.getElementById("reset-email");
+    const status = document.getElementById("reset-request-status");
+    const email = emailInput?.value?.trim();
+
+    if (!email) {
+        if (status) status.textContent = "Enter your email address first.";
+        return;
+    }
+
+    if (status) status.textContent = "Sending password reset email...";
+
+    try {
+        const data = await apiPost("/api/v1/auth/password-reset-request/", { email });
+        if (status) status.textContent = data.detail || "Password reset email sent.";
+    } catch (error) {
+        if (status) status.textContent = `Error: ${extractErrorMessage(error)}`;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("login-form");
     if (form) {
@@ -57,4 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document
         .getElementById("resend-verification-btn")
         ?.addEventListener("click", handleResendVerificationClick);
+
+    document
+        .getElementById("request-reset-btn")
+        ?.addEventListener("click", handleResetRequestClick);
 });
