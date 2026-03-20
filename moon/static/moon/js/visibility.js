@@ -131,6 +131,7 @@ function renderVisibilitySummaryCards(data, windowData) {
     const tz = isValidIanaTimeZone(rawTz) ? rawTz : "UTC";
     const location = loadSelectedLocation();
     const firstConsensusDate = getFirstConsensusDate(windowData);
+    const consensusMoonAgeHours = getFirstConsensusMoonAge(windowData);
 
     container.innerHTML = `
         <div class="row g-3">
@@ -193,8 +194,8 @@ function renderVisibilitySummaryCards(data, windowData) {
             <div class="col-6 col-lg-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
-                    <div class="data-label">Moon Age @ Sunset</div>
-                    <div class="data-value">${formatMoonAge(data?.moon_age_hours)}</div>
+                    <div class="data-label">Moon Age @ Consensus Sunset</div>
+                    <div class="data-value">${formatMoonAge(consensusMoonAgeHours ?? data?.moon_age_hours)}</div>
                 </div>
             </div>
 
