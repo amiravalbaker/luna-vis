@@ -1,6 +1,21 @@
 const ACCESS_TOKEN_KEY = "lunavis_access_token";
 const REFRESH_TOKEN_KEY = "lunavis_refresh_token";
 const USER_KEY = "lunavis_user";
+const AUTH_DATE_STORAGE_KEY = "lunavis_selected_date";
+const AUTH_DATE_ANCHOR_KEY = "lunavis_anchor_date";
+
+
+function resetSelectedDateToToday() {
+    const today = new Date().toISOString().split("T")[0];
+
+    if (typeof setSelectedDateAndAnchor === "function") {
+        setSelectedDateAndAnchor(today);
+        return;
+    }
+
+    localStorage.setItem(AUTH_DATE_STORAGE_KEY, today);
+    localStorage.setItem(AUTH_DATE_ANCHOR_KEY, today);
+}
 
 function saveTokens(access, refresh) {
     localStorage.setItem(ACCESS_TOKEN_KEY, access);
@@ -167,6 +182,7 @@ async function loginUser(username, password) {
 
     const me = await authenticatedApiGet("/api/v1/me/");
     saveCurrentUser(me);
+    resetSelectedDateToToday();
 
     return me;
 }
@@ -181,6 +197,7 @@ async function registerUser(username, email, password, password_confirm) {
 
     saveTokens(data.access, data.refresh);
     saveCurrentUser(data.user);
+    resetSelectedDateToToday();
 
     return data.user;
 }

@@ -15,14 +15,26 @@ let currentNextNewMoonDate = null;
 function formatTimeOnly(isoString, timeZone = "Europe/London") {
     if (!isoString) return "N/A";
 
+    const safeTimeZone = isValidIanaTimeZone(timeZone) ? timeZone : "UTC";
+
     const date = new Date(isoString);
 
     return date.toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
-        timeZone,
+        timeZone: safeTimeZone,
     });
+}
+
+function isValidIanaTimeZone(value) {
+    if (!value) return false;
+    try {
+        Intl.DateTimeFormat("en-GB", { timeZone: value }).format(new Date());
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function formatMoonAge(hours) {
@@ -115,7 +127,8 @@ function renderVisibilityHeroSummary(visibilityData, windowData) {
 
 function renderVisibilitySummaryCards(data, windowData) {
     const container = document.getElementById("visibility-summary-cards");
-    const tz = document.getElementById("tz")?.value || "UTC";
+    const rawTz = document.getElementById("tz")?.value;
+    const tz = isValidIanaTimeZone(rawTz) ? rawTz : "UTC";
     const location = loadSelectedLocation();
     const firstConsensusDate = getFirstConsensusDate(windowData);
 
@@ -440,7 +453,7 @@ async function loadVisibilityForCurrentState() {
 
     const elevation_m = document.getElementById("elevation_m").value || location.elevation_m || 0;
     const date = String(document.getElementById("date").value || "").split("T")[0];
-    const tz = location.tz || "UTC";
+    const tz = isValidIanaTimeZone(location?.tz) ? location.tz : "UTC";
 
     visibilityStatus.textContent = "Loading visibility...";
     windowStatus.textContent = "Loading window...";

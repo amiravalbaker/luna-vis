@@ -1,11 +1,16 @@
 asgiref==3.11.1
 attrs==25.4.0
 certifi==2026.2.25
+cffi==2.0.0
+charset-normalizer==3.4.5
 dj-database-url==0.5.0
 Django==5.2.12
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.29.0
+flatbuffers==25.12.19
+h3==4.4.2
+idna==3.11
 inflection==0.5.1
 jplephem==2.24
 jsonschema==4.26.0
@@ -13,10 +18,11 @@ jsonschema-specifications==2025.9.1
 numpy==2.4.2
 psycopg2==2.9.11
 psycopg2-binary==2.9.11
+pycparser==3.0
 PyJWT==2.11.0
 PyYAML==6.0.3
-requests==2.32.5
 referencing==0.37.0
+requests==2.32.5
 rpds-py==0.30.0
 sgp4==2.25
 skyfield==1.54
@@ -25,3 +31,4 @@ timezonefinder==8.2.1
 typing_extensions==4.15.0
 tzdata==2025.3
 uritemplate==4.2.0
+urllib3==2.6.3

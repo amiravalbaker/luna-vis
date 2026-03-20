@@ -7,14 +7,26 @@ console.log("daily.js loaded");
 function formatTimeOnly(isoString, timeZone = "Europe/London") {
     if (!isoString) return "N/A";
 
+    const safeTimeZone = isValidIanaTimeZone(timeZone) ? timeZone : "UTC";
+
     const date = new Date(isoString);
 
     return date.toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
-        timeZone,
+        timeZone: safeTimeZone,
     });
+}
+
+function isValidIanaTimeZone(value) {
+    if (!value) return false;
+    try {
+        Intl.DateTimeFormat("en-GB", { timeZone: value }).format(new Date());
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function formatMoonAge(hours) {
@@ -65,7 +77,7 @@ function formatTownCountry(location) {
 
 function renderResults(data) {
     const results = document.getElementById("results");
-    const tz = data.tz || "UTC";
+    const tz = isValidIanaTimeZone(data?.tz) ? data.tz : "UTC";
     const location = loadSelectedLocation();
     const selectedDate = data?.date_local || loadSelectedDate();
 
@@ -218,7 +230,7 @@ async function loadDailyDataForCurrentState() {
     if (!location) return;
 
     const date = document.getElementById("date").value;
-    const tz = location.tz || "UTC";
+    const tz = isValidIanaTimeZone(location?.tz) ? location.tz : "UTC";
 
     status.textContent = "Loading...";
 
@@ -260,6 +272,9 @@ async function handleDailyFormSubmit(event) {
 -------------------------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+    // Daily page should always start from today's date.
+    setSelectedDateAndAnchor(getTodayDateString());
 
     applyStoredDateToPageFields();
     applyStoredLocationToPageFields();

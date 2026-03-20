@@ -22,7 +22,14 @@ function loadSelectedLocation() {
     if (!raw) return null;
 
     try {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+
+        if (!parsed?.tz || !isValidIanaTimeZone(parsed.tz)) {
+            parsed.tz = "UTC";
+            localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(parsed));
+        }
+
+        return parsed;
     } catch {
         return null;
     }
@@ -38,6 +45,16 @@ function clearSelectedLocation() {
         })
     );
 }
+
+    function isValidIanaTimeZone(value) {
+        if (!value) return false;
+        try {
+            Intl.DateTimeFormat("en-GB", { timeZone: value }).format(new Date());
+            return true;
+        } catch {
+            return false;
+        }
+    }
 
 /* -------------------------
    NAV LABEL
@@ -171,6 +188,9 @@ function closeLocationPanel() {
     const panel = document.getElementById("location-panel");
     if (!panel) return;
 
+    // Persist any typed elevation/timezone edits even if the user closes immediately.
+    saveManualLocationMetaFromPanel();
+
     panel.classList.add("hidden");
 }
 
@@ -190,7 +210,7 @@ function populateGlobalLocationFields() {
 
     if (location) {
         input.value = location.display_name || "";
-        tzInput.value = location.tz_label || location.tz || "UTC";
+            tzInput.value = location.tz || "UTC";
         elevationInput.value = location.elevation_m ?? 0;
         display.textContent = `Current location: ${location.display_name} | ${location.tz_label || location.tz || "UTC"} | ${location.elevation_m ?? 0} m`;
     } else {
@@ -209,6 +229,36 @@ function populateGlobalLocationFields() {
     if (saveFavBtn) {
         saveFavBtn.classList.toggle("hidden", !isLoggedIn());
     }
+}
+
+function saveManualLocationMetaFromPanel() {
+    const current = loadSelectedLocation();
+    if (!current) return;
+
+    const tzInput = document.getElementById("global-tz-input");
+    const elevationInput = document.getElementById("global-elevation-input");
+    const display = document.getElementById("global-location-display");
+
+        const rawTzValue = tzInput?.value?.trim();
+        const tzValue = isValidIanaTimeZone(rawTzValue) ? rawTzValue : (current.tz || "UTC");
+    const elevationValue = parseInt(elevationInput?.value ?? current.elevation_m ?? 0, 10);
+
+    const updated = {
+        ...current,
+        tz: tzValue,
+            tz_label: current.tz_label || tzValue,
+        elevation_m: Number.isNaN(elevationValue) ? 0 : elevationValue,
+    };
+
+    saveSelectedLocation(updated);
+
+    if (display) {
+        display.textContent = `Current location: ${updated.display_name} | ${updated.tz_label || updated.tz || "UTC"} | ${updated.elevation_m ?? 0} m`;
+    }
+
+        if (tzInput && tzInput.value !== tzValue) {
+            tzInput.value = tzValue;
+        }
 }
 
 function applyStoredLocationToPageFields() {
@@ -487,6 +537,8 @@ function initializeGlobalLocationUI() {
     const useMyLocationBtn = document.getElementById("global-use-my-location-btn");
     const clearBtn = document.getElementById("global-clear-location-btn");
     const saveFavBtn = document.getElementById("save-location-favourite-btn");
+    const globalTzInput = document.getElementById("global-tz-input");
+    const globalElevationInput = document.getElementById("global-elevation-input");
 
     if (toggleBtn) {
         toggleBtn.addEventListener("click", openLocationPanel);
@@ -510,5 +562,15 @@ function initializeGlobalLocationUI() {
 
     if (saveFavBtn) {
         saveFavBtn.addEventListener("click", saveCurrentLocationAsFavouriteFromPanel);
+    }
+
+    if (globalTzInput) {
+        globalTzInput.addEventListener("change", saveManualLocationMetaFromPanel);
+        globalTzInput.addEventListener("input", saveManualLocationMetaFromPanel);
+    }
+
+    if (globalElevationInput) {
+        globalElevationInput.addEventListener("change", saveManualLocationMetaFromPanel);
+        globalElevationInput.addEventListener("input", saveManualLocationMetaFromPanel);
     }
 }
