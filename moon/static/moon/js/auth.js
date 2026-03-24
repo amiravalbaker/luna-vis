@@ -285,8 +285,10 @@ function updateAuthPanel() {
         document.getElementById("settings-logout-btn")?.addEventListener("click", logoutUser);
     } else {
         panel.innerHTML = `
-            <a href="/login/">Login</a>
-            <a href="/register/">Register</a>
+            <div class="settings-link-list">
+                <a href="/login/">Login</a>
+                <a href="/register/">Register</a>
+            </div>
         `;
     }
 }

@@ -24,3 +24,6 @@ def favourites_page(request):
 
 def observations_page(request):
     return render(request, "moon/observations.html")
+
+def about_page(request):
+    return render(request, "moon/about.html")

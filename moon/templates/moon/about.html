@@ -1,0 +1,216 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}About - LunaVis{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+<div class="container-fluid px-0 about-page">
+    <div class="row g-3">
+        <div class="col-12">
+            <section class="card mb-0">
+                <h1 class="mb-3">LunaVis</h1>
+                <p class="mb-0">
+                    Luna Vis is a crescent Moon visibility app. As well as giving you the daily Moon data for your
+                    selected location and date, Luna Vis allows you to determine when the new crescent Moon will be
+                    visible from your selected location.
+                </p>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <h1 class="mb-3">Usability</h1>
+                <h3>Select a Location</h3>
+                <p>Use the location icon in the navigation bar to select a location. Simply enter a place name and
+                    click ‘Find place’ or select the 'Use my location' button. Once you have selected your location the
+                    average elevation will automatically be determined. You can manually adjust this if you know the
+                    elevation of your specific location. If you are registered and logged in, you can add a location to
+                    your personal list of favourite locations.</p>
+                <h3>Select a Date</h3>
+                <p>The default date is for today’s date. To change the date, use the calendar icon in the navigation
+                    bar. You can also use the arrow keys to scroll through dates for up to &pm 16 days from the set
+                    date.
+                </p>
+                <h3>Daily Moon Data</h3>
+                The Daily Moon Data page shows core lunar and solar values for the selected location on the selected
+                date at
+                the current time.</p>
+                <h3>New Moon Visibility</h3>
+                <p>The New Moon visibility page shows the date for the next new Moon from the selected date. If the date
+                    is
+                    within 5 days of the new Moon it will show the information for that new Moon. The conjunction time
+                    is shown along with the consensus visibility – the first date that the crescent Moon is predicted to
+                    be visible, by all criteria methods - for the selected location. You can also use the arrow keys to
+                    scroll through months to see information for the previous and next new Moons.
+                    The 5-day visibility window is also shown giving more detailed information for each visibility
+                    criteria. </p>
+                <h3>Observation Log</h3>
+                <p>If you are registered and logged in you can use the Observation page to log your observations of
+                    the
+                    new Moon and contribute to citizen science. This data will be added to the database and used to
+                    constrain the prediction criteria.</p>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <h1 class="mb-3">The Science</h1>
+                <p>
+                    The new Moon occurs when the Moon is positioned directly between the Earth and the Sun, such that
+                    the Moon is obscured from view by observers on Earth. The moment when this happens is exact and does
+                    not depend
+                    on the
+                    observer's location. We refer to this as the moment of conjunction, or conjunction time.
+                </p>
+                <div class="text-center my-3">
+                    <img src="{% static 'moon/img/moon-conjunction.jpg' %}" alt="Moon conjunction"
+                        class="img-fluid rounded shadow-sm about-science-image">
+                </div>
+                <p>
+                    As the Moon continues in its orbit around the Earth, and the Earth continues in its orbit around the
+                    Sun,
+                    the face of the Moon slowly becomes illuminated. However, during this phase the sun and Moon are in
+                    the same
+                    part of the sky such that they rise and set at around the same time. So, although the relative
+                    position of
+                    the Sun and Moon is such that the illuminated face of the Moon would render a crescent, it may be
+                    obscured
+                    by the Sun's glare.
+                </p>
+                <p>
+                    To determine when the new crescent Moon is first visible, we therefore need to consider many
+                    factors. Fortunately for us this has been studied since the time of the Babylonians and was
+                    furthered
+                    by many
+                    Muslim scientists such as: Yaʿqūb ibn Ṭāriq (Late 8th century); Al-Khwarizmi (780 - 850);
+                    Al-Farghani (800
+                    - 870); Thābit ibn Qurra (826 – 901); Al-Battani (858 – 929); Abu Ja'far al-Khazin (900 - 971);
+                    Al-Biruni (973 – 1050); Nasir al-Din al-Tusi (1201 – 1274) and Al-Kashani (1380 - 1429).
+                </p>
+                <p>The main criteria considered today are:</p>
+                <ol class="mb-0">
+                    <li><strong>Moons age:</strong> the time between conjunction and the time of observation.</li>
+                    <li><strong>Lag time:</strong> The time between sunset and moonset.</li>
+                    <li><strong>Moons Altitude:</strong> The angular distance of the Moon above the horizon.</li>
+                    <li><strong>The arc of vision (ARCV):</strong> The angular difference in altitude between the Sun
+                        and the Moon. This is the vertical separation between the Sun and the Moon, relative
+                        to the horizon, and
+                        thus depends on the observer's location, elevation, and the time of day.</li>
+                    <li><strong>Arc of light (ARCL):</strong> the angular separation between the Sun and the Moon,
+                        referred to as
+                        elongation. Elongation is invariant to the rotation of the observer's horizon and is thus not
+                        affected by
+                        the observers location.</li>
+                    <li><strong>Relative azimuth (DAZ):</strong> The angular difference in azimuth between the Sun and
+                        the Moon. Note: the azimuth is azimuth is a horizontal angle measured clockwise in degrees from
+                        a north reference line (usually true north) to a target or celestial body, ranging from 0° to
+                        360°</li>
+                    <li><strong>Topocentric Crescent width (W):</strong> The angular width of the illuminated area of
+                        the Moon measured
+                        along the Moon's diameter. The topocentric width is calculated relative to the Earths surface
+                        and thus is
+                        dependent on the observers location and elevation.</li>
+                </ol>
+
+                <div class="text-center my-3">
+                    <img src="{% static 'moon/img/moon-angles.jpg' %}" alt="Moon angles"
+                        class="img-fluid rounded shadow-sm about-science-image">
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="card mb-0">
+                <h1 class="mb-3">Visibility Criteria</h1>
+                <p>
+                    In this app we currently consider the criteria as developed by Yallop (1997) and Odeh (2006), but we
+                    plan to
+                    add more criteria in the future.
+                </p>
+
+                <h3>Yallop</h3>
+                <p>
+                    Yallops (1997)criteria is based on the Indian method and was determined from a standard set of 295 first
+                    sightings
+                    of the
+                    new crescent Moon that cover the period 1859 to 1996. The visibility index, <em>q</em>, is
+                    calculated from the arc of vision <em>(ARCV)</em> and the topocentric crescent width, <em>W</em>, in
+                    arcminutes:</p>
+                <div class="about-equation-box border rounded p-3 mb-3 overflow-auto">
+                    $$
+                    q = ARCV - \left(11.8371 - 6.3226W + 0.7319W^2 - 0.1018W^3\right)
+                    $$
+                </div>
+                <p class="mb-2"> The value for <em>q</em> is then used to determine the visibility of the crescent Moon
+                    as follows:
+                <ul class="mb-3 criteria-list">
+                    <li class="criteria-row"><span class="criteria-threshold">$0.216 < q$</span><span
+                        class="criteria-text">Zone A, Easily visible ($ARCL \geq 12^\circ$).</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$-0.014 < q \leq 0.216$</span><span
+                        class="criteria-text">Zone B, Visible under perfect conditions.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$-0.160 < q \leq -0.014$</span><span
+                        class="criteria-text">Zone C, May need optical aid to find crescent.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$-0.232 < q \leq -0.160$</span><span
+                        class="criteria-text">Zone D, Will need optical aid to find crescent.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$-0.293 < q \leq -0.232$</span><span
+                        class="criteria-text">Zone E, Not visible with a telescope ($ARCL \leq 8.5^\circ$).</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$q \leq -0.293$</span><span
+                        class="criteria-text">Zone F, Not visible, below Danjon limit ($ARCL \leq 8.5^\circ$).</span></li>
+                </ul>
+                </p>
+                <p>
+                    Note: The Danjon limit is the minimum elongation at which the crescent Moon can be seen, which is
+                    approximately 7°. However, Yallop's criterion suggests that the visibility limit is around
+                    8.5°, which is slightly more conservative than the traditional Danjon limit.
+                </p>
+
+                <h3>Odeh</h3>
+                <p>
+                    Odeh's (2006) criteria was established based on 737 observations and determines visibility from the
+                    topocentric arc of vision <em>(ARCV)</em> and the topocentric crescent width, <em>W</em>, in
+                    arcminutes. The visibility index, <em>V</em>, is calculated as follows:
+                </p>
+                <div class="about-equation-box border rounded p-3 mb-3 overflow-auto">
+                    $$
+                    V = ARCV - \left(-0.1018W^3 + 0.7319W^2 - 6.3226W + 7.1651\right)
+                    $$
+                </div>
+                <p class="mb-2"> The value for <em>V</em> is then used to determine the visibility of the crescent Moon
+                    as follows:
+                </p>
+                <ul class="mb-0 criteria-list">
+                    <li class="criteria-row"><span class="criteria-threshold">$5.65$ \leq V</span><span
+                        class="criteria-text">Zone A, Crescent is visible by naked eyes.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$2 \leq V < 5.65$</span><span
+                        class="criteria-text">Zone B, Crescent is visible by optical aid, and it could be seen by naked
+                        eyes.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$-0.96 \leq V < 2$</span><span
+                        class="criteria-text">Zone C, Crescent is visible by optical aid only.</span></li>
+                    <li class="criteria-row"><span class="criteria-threshold">$V < -0.96$</span><span
+                        class="criteria-text">Zone D, Crescent is not visible even by optical aid.</span></li>
+                </ul>
+
+            </section>
+        </div>
+    </div>
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof renderMathInElement === "function") {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
+                ],
+                throwOnError: false
+            });
+        }
+    });
+</script>
+{% endblock %}

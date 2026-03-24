@@ -8,6 +8,7 @@ from .views_frontend import (
     reset_password_page,
     favourites_page,
     observations_page,
+    about_page,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path("reset-password/", reset_password_page, name="reset-password-page"),
     path("favourites/", favourites_page, name="favourites-page"),
     path("observations/", observations_page, name="observations-page"),
+    path("about/", about_page, name="about-page"),
 ]
