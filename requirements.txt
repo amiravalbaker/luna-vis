@@ -5,6 +5,7 @@ cffi==2.0.0
 charset-normalizer==3.4.5
 dj-database-url==0.5.0
 Django==5.2.12
+djangocorsheaders==4.9.0
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.29.0

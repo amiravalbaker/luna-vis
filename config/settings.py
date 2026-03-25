@@ -59,8 +59,16 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_bool("DEBUG", False)
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", '.herokuapp.com' ])
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", "10.0.2.2", '.herokuapp.com' ])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
+
+# Browser-based clients (including Flutter web) require CORS headers.
+CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", DEBUG)
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", [])
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\\d+$",
+    r"^http://127\\.0\\.0\\.1:\\d+$",
+]
 
 # Heroku fallback: avoid 400 Bad Request when env vars are not yet configured.
 if os.environ.get("DYNO"):
@@ -77,6 +85,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'moon',
     "drf_spectacular",
@@ -98,6 +107,7 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
