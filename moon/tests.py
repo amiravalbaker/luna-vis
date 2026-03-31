@@ -127,3 +127,7 @@ class VisibilityWindowEventTimesTests(TestCase):
 			self.assertIn("sunset_utc", night)
 			self.assertIn("moonset_utc", night)
 			self.assertIsNotNone(night["sunset_utc"])
+			self.assertTrue(night.get("criteria"))
+			for criterion in night["criteria"]:
+				self.assertIsNotNone(criterion.get("band"))
+				self.assertIsNotNone(criterion.get("score"))

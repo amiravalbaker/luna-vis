@@ -50,21 +50,17 @@ def scan_visibility_window(*, lat, lon, elevation_m, start_date, tz_name, nights
 
         age_hours = moon_age_hours(ctx.sunset_utc)
 
-        # Only apply visibility criteria in the new-moon window
-        if not (0 <= age_hours <= 120):
-            results = []
-            visible_count = 0
-            maybe_count = 0
-            not_visible_count = 0
-            consensus_fraction = 0.0
-        else:
-            results = [criterion.evaluate(ctx) for criterion in CRITERIA]
-            agg = aggregate_results(results)
-            visible_count = agg.visible_count
-            maybe_count = agg.maybe_count
-            not_visible_count = agg.not_visible_count
-            consensus_fraction = agg.consensus_fraction
+        # Always compute criterion outputs so UI can show band/score consistently,
+        # including conjunction-day rows where moon age can be slightly negative.
+        results = [criterion.evaluate(ctx) for criterion in CRITERIA]
+        agg = aggregate_results(results)
+        visible_count = agg.visible_count
+        maybe_count = agg.maybe_count
+        not_visible_count = agg.not_visible_count
+        consensus_fraction = agg.consensus_fraction
 
+        # Keep milestone dates constrained to the standard visibility window.
+        if 0 <= age_hours <= 120:
             if optimistic_date is None and visible_count >= 1:
                 optimistic_date = test_date
 
