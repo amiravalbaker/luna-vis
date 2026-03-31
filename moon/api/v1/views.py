@@ -262,6 +262,8 @@ def visibility_window_view(request):
         "results": [
             {
                 "date_local": str(n.date_local),
+                "sunset_utc": n.sunset_utc,
+                "moonset_utc": n.moonset_utc,
                 "age_hours": n.age_hours,
                 "visible_count": n.visible_count,
                 "maybe_count": n.maybe_count,

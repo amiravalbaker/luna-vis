@@ -86,6 +86,15 @@ function getFirstConsensusMoonAge(windowData) {
     return consensusNight?.age_hours ?? null;
 }
 
+function getFirstConsensusNight(windowData) {
+    const firstConsensusDate = getFirstConsensusDate(windowData);
+    if (!firstConsensusDate || !Array.isArray(windowData?.results)) return null;
+
+    return windowData.results.find(
+        (night) => night?.date_local === firstConsensusDate
+    ) || null;
+}
+
 function formatTownCountry(location) {
     if (!location?.display_name) return "N/A";
 
@@ -131,7 +140,10 @@ function renderVisibilitySummaryCards(data, windowData) {
     const tz = isValidIanaTimeZone(rawTz) ? rawTz : "UTC";
     const location = loadSelectedLocation();
     const firstConsensusDate = getFirstConsensusDate(windowData);
+    const firstConsensusNight = getFirstConsensusNight(windowData);
     const consensusMoonAgeHours = getFirstConsensusMoonAge(windowData);
+    const consensusSunsetUtc = firstConsensusNight?.sunset_utc || data?.sunset_utc;
+    const consensusMoonsetUtc = firstConsensusNight?.moonset_utc || data?.moonset_utc;
 
     container.innerHTML = `
         <div class="row g-3">
@@ -187,7 +199,7 @@ function renderVisibilitySummaryCards(data, windowData) {
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/sunset.png" alt="Sunset" class="data-icon-img data-icon-img-sun-event">
                     <div class="data-label">Sunset</div>
-                    <div class="data-value">${formatTimeOnly(data.sunset_utc, tz)}</div>
+                    <div class="data-value">${formatTimeOnly(consensusSunsetUtc, tz)}</div>
                 </div>
             </div>
 
@@ -203,7 +215,7 @@ function renderVisibilitySummaryCards(data, windowData) {
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/moonset.png" alt="Moonset" class="data-icon-img">
                     <div class="data-label">Moonset</div>
-                    <div class="data-value">${formatTimeOnly(data.moonset_utc, tz)}</div>
+                    <div class="data-value">${formatTimeOnly(consensusMoonsetUtc, tz)}</div>
                 </div>
             </div>
         </div>

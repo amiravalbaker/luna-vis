@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional
 
 from .criteria import CRITERIA
@@ -12,6 +12,8 @@ from .phase import moon_age_hours
 @dataclass(frozen=True)
 class NightResult:
     date_local: date
+    sunset_utc: datetime
+    moonset_utc: Optional[datetime]
     age_hours: float
     results: List[CriterionResult]
     visible_count: int
@@ -75,6 +77,8 @@ def scan_visibility_window(*, lat, lon, elevation_m, start_date, tz_name, nights
         night_results.append(
             NightResult(
                 date_local=test_date,
+                sunset_utc=ctx.sunset_utc,
+                moonset_utc=ctx.moonset_utc,
                 age_hours=age_hours,
                 results=results,
                 visible_count=visible_count,

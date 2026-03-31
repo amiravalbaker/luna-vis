@@ -102,3 +102,28 @@ class VisibilityMoonAgeTests(TestCase):
 		sunset_utc = _parse_iso_utc(payload["sunset_utc"])
 		expected_age = moon_age_hours(sunset_utc)
 		self.assertAlmostEqual(payload["moon_age_hours"], expected_age, places=6)
+
+
+class VisibilityWindowEventTimesTests(TestCase):
+	def test_visibility_window_includes_sunset_and_moonset_per_night(self):
+		response = self.client.get(
+			"/api/v1/visibility-window/",
+			{
+				"lat": 50.1186,
+				"lon": -5.5372,
+				"start_date": "2026-03-20",
+				"tz": "Europe/London",
+				"elevation_m": 0,
+				"nights": 5,
+			},
+		)
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		results = payload.get("results", [])
+		self.assertTrue(results)
+
+		for night in results:
+			self.assertIn("sunset_utc", night)
+			self.assertIn("moonset_utc", night)
+			self.assertIsNotNone(night["sunset_utc"])
