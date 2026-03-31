@@ -52,6 +52,15 @@ function formatMoonAge(hours) {
     return `${sign}${(absHours / 24).toFixed(1)} days`;
 }
 
+function safeFormatDateLong(dateString) {
+    if (typeof formatDateLong === "function") {
+        return formatDateLong(dateString);
+    }
+
+    if (!dateString) return "N/A";
+    return String(dateString);
+}
+
 function ensureDateInputIsDateOnly() {
     const dateInput = document.getElementById("date");
     if (!dateInput || !dateInput.value) return;
@@ -67,7 +76,7 @@ function renderVisibilityDateSummary(newMoonDate) {
     const el = document.getElementById("selected-date-summary");
     if (!el) return;
 
-    el.innerHTML = `<strong>Date:</strong> ${newMoonDate ? formatDateLong(newMoonDate) : "N/A"}`;
+    el.innerHTML = `<strong>Date:</strong> ${newMoonDate ? safeFormatDateLong(newMoonDate) : "N/A"}`;
 }
 
 function getFirstConsensusDate(windowData) {
@@ -116,18 +125,67 @@ function formatTownCountry(location) {
     return `${locality}, ${country}`;
 }
 
+function normalizeUtcOffsetLabel(offsetLabel) {
+    if (!offsetLabel) return "UTC+0";
+
+    const normalized = String(offsetLabel).replace("GMT", "UTC");
+    const match = normalized.match(/^UTC([+-])(\d{1,2})(?::?(\d{2}))?$/i);
+    if (!match) return normalized;
+
+    const sign = match[1];
+    const hours = String(parseInt(match[2], 10));
+    const minutes = match[3] || "00";
+
+    if (minutes === "00") {
+        return `UTC${sign}${hours}`;
+    }
+
+    return `UTC${sign}${hours}:${minutes}`;
+}
+
+function getUtcOffsetLabelForTimezone(tzName) {
+    if (!isValidIanaTimeZone(tzName)) return "UTC+0";
+
+    try {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+            timeZone: tzName,
+            timeZoneName: "shortOffset",
+        }).formatToParts(new Date());
+
+        const rawOffset = parts.find((p) => p.type === "timeZoneName")?.value;
+        return normalizeUtcOffsetLabel(rawOffset || "UTC+0");
+    } catch {
+        return "UTC+0";
+    }
+}
+
+function formatTimezoneShort(location, fallbackTz = "UTC") {
+    const tzName = location?.tz || fallbackTz || "UTC";
+    const label = location?.tz_label;
+
+    if (label) {
+        const seasonalMatch = String(label).match(/^(.+?)\s+\((?:winter|spring|summer|autumn)\)\s+\((UTC[+-]\d+(?::\d{2})?)\)$/i);
+        if (seasonalMatch) {
+            return `${seasonalMatch[1]} (${normalizeUtcOffsetLabel(seasonalMatch[2])})`;
+        }
+
+        const shortMatch = String(label).match(/^(.+?)\s+\((UTC[+-]\d+(?::\d{2})?)\)$/i);
+        if (shortMatch) {
+            return `${shortMatch[1]} (${normalizeUtcOffsetLabel(shortMatch[2])})`;
+        }
+    }
+
+    const city = tzName.includes("/") ? tzName.split("/").pop().replaceAll("_", " ") : tzName;
+    const offset = getUtcOffsetLabelForTimezone(tzName);
+    return `${city} (${offset})`;
+}
+
 function renderVisibilityHeroSummary(visibilityData, windowData) {
     const el = document.getElementById("visibility-phase-summary");
     if (!el) return;
 
-    const tz = document.getElementById("tz")?.value || "UTC";
-    const firstConsensusDate = getFirstConsensusDate(windowData);
-
-    el.innerHTML = `
-        <div class="phase-illumination">
-            New Moon: ${windowData?.new_moon_date ? formatDateLong(windowData.new_moon_date) : "N/A"}
-        </div>
-    `;
+    // Keep hero area focused on moon image; summary lines render in the card below.
+    el.innerHTML = "";
 }
 
 /* -------------------------
@@ -136,6 +194,8 @@ function renderVisibilityHeroSummary(visibilityData, windowData) {
 
 function renderVisibilitySummaryCards(data, windowData) {
     const container = document.getElementById("visibility-summary-cards");
+    if (!container) return;
+
     const rawTz = document.getElementById("tz")?.value;
     const tz = isValidIanaTimeZone(rawTz) ? rawTz : "UTC";
     const location = loadSelectedLocation();
@@ -144,34 +204,20 @@ function renderVisibilitySummaryCards(data, windowData) {
     const consensusMoonAgeHours = getFirstConsensusMoonAge(windowData);
     const consensusSunsetUtc = firstConsensusNight?.sunset_utc || data?.sunset_utc;
     const consensusMoonsetUtc = firstConsensusNight?.moonset_utc || data?.moonset_utc;
+    const consensusText = firstConsensusDate ? safeFormatDateLong(firstConsensusDate) : "Not reached in current window";
+    const conjunctionUtc = windowData?.new_moon_conjunction_utc || data?.new_moon_conjunction_utc;
+    const conjunctionText = `${windowData?.new_moon_date ? safeFormatDateLong(windowData.new_moon_date) : "N/A"} @${conjunctionUtc ? formatTimeOnly(conjunctionUtc, tz) : "N/A"}`;
 
     container.innerHTML = `
         <div class="row g-3">
-            <div class="col-6 col-lg-4">
-                <div class="data-item data-item-centered h-100">
-                    <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
-                    <div class="data-label">New Moon</div>
-                    <div class="data-value">${windowData?.new_moon_date ? formatDateLong(windowData.new_moon_date) : "N/A"}</div>
+            <div class="col-12">
+                <div class="data-item data-item-centered visibility-new-moon-line">
+                    <span class="visibility-consensus-title">New Moon Conjunction:</span>
+                    <span class="visibility-consensus-value">${conjunctionText}</span>
                 </div>
             </div>
 
-            <div class="col-6 col-lg-4">
-                <div class="data-item data-item-centered h-100">
-                    <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
-                    <div class="data-label">Consensus Visibility</div>
-                    <div class="data-value">${firstConsensusDate ? formatDateLong(firstConsensusDate) : "N/A"}</div>
-                </div>
-            </div>
-
-            <div class="col-12 col-lg-4">
-                <div class="data-item data-item-centered h-100">
-                    <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
-                    <div class="data-label">Conjunction Time</div>
-                    <div class="data-value">${data?.new_moon_conjunction_utc ? formatTimeOnly(data.new_moon_conjunction_utc, tz) : "N/A"}</div>
-                </div>
-            </div>
-
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-md-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/location.svg" alt="Location" class="data-icon-img">
                     <div class="data-label">Location</div>
@@ -179,15 +225,15 @@ function renderVisibilitySummaryCards(data, windowData) {
                 </div>
             </div>
 
-            <div class="col-6 col-lg-4">
+            <div class="col-6 col-md-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/timezone.svg" alt="Timezone" class="data-icon-img">
                     <div class="data-label">Timezone</div>
-                    <div class="data-value">${location?.tz_label || location?.tz || tz}</div>
+                    <div class="data-value">${formatTimezoneShort(location, tz)}</div>
                 </div>
             </div>
 
-            <div class="col-6 col-lg-4">
+            <div class="col-6 col-md-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/elevation.svg" alt="Elevation" class="data-icon-img">
                     <div class="data-label">Elevation</div>
@@ -195,7 +241,14 @@ function renderVisibilitySummaryCards(data, windowData) {
                 </div>
             </div>
 
-            <div class="col-6 col-lg-4">
+            <div class="col-12">
+                <div class="visibility-consensus-line">
+                    <span class="visibility-consensus-title">New Crescent Moon Visibility:</span>
+                    <span class="visibility-consensus-value">${consensusText}.</span>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/sunset.png" alt="Sunset" class="data-icon-img data-icon-img-sun-event">
                     <div class="data-label">Sunset</div>
@@ -203,19 +256,19 @@ function renderVisibilitySummaryCards(data, windowData) {
                 </div>
             </div>
 
-            <div class="col-6 col-lg-4">
-                <div class="data-item data-item-centered h-100">
-                    <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
-                    <div class="data-label">Moon Age @ Consensus Sunset</div>
-                    <div class="data-value">${formatMoonAge(consensusMoonAgeHours ?? data?.moon_age_hours)}</div>
-                </div>
-            </div>
-
-            <div class="col-6 col-lg-4">
+            <div class="col-6 col-md-4">
                 <div class="data-item data-item-centered h-100">
                     <img src="/static/moon/img/icons/moonset.png" alt="Moonset" class="data-icon-img">
                     <div class="data-label">Moonset</div>
                     <div class="data-value">${formatTimeOnly(consensusMoonsetUtc, tz)}</div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="data-item data-item-centered h-100">
+                    <img src="/static/moon/img/icons/moon.png" alt="Moon" class="data-icon-img">
+                    <div class="data-label">Moon Age</div>
+                    <div class="data-value">${formatMoonAge(consensusMoonAgeHours ?? data?.moon_age_hours)}</div>
                 </div>
             </div>
         </div>
@@ -271,6 +324,7 @@ function renderVisibilityResults(data) {
 
 function renderWindowSummary(data) {
     const summaryContainer = document.getElementById("window-summary");
+    if (!summaryContainer) return;
 
     const nights = Array.isArray(data?.results) ? data.results.slice(0, 5) : [];
     while (nights.length < 5) {
@@ -319,7 +373,7 @@ function renderWindowSummary(data) {
                 <tbody>
                     <tr>
                         <th>Date</th>
-                        ${cellValue((night) => night?.date_local ? formatDateLong(night.date_local) : "N/A")}
+                        ${cellValue((night) => night?.date_local ? safeFormatDateLong(night.date_local) : "N/A")}
                     </tr>
                     <tr>
                         <th>Yallop</th>
@@ -386,7 +440,7 @@ function renderWindowTable(data) {
 
     const rows = (data.results || []).map(n => `
         <tr>
-            <td>${formatDateLong(n.date_local)}</td>
+            <td>${safeFormatDateLong(n.date_local)}</td>
             <td>${formatMoonAge(n.age_hours)}</td>
             <td>${n.visible_count}</td>
             <td>${n.maybe_count}</td>
@@ -504,12 +558,20 @@ async function loadVisibilityForCurrentState() {
             dateInput.value = windowData.new_moon_date;
         }
 
-        renderVisibilityHeroSummary(visibilityData, windowData);
-        renderVisibilityDateSummary(windowData.new_moon_date);  // keep user's selected/input date visible
-        renderVisibilitySummaryCards(visibilityData, windowData);
-        renderVisibilityResults(visibilityData);
-        renderWindowSummary(windowData);
-        renderWindowTable(windowData);
+        const runRender = (fn, label) => {
+            try {
+                fn();
+            } catch (error) {
+                console.error(`Visibility render failed (${label}):`, error);
+            }
+        };
+
+        runRender(() => renderVisibilityHeroSummary(visibilityData, windowData), "hero");
+        runRender(() => renderVisibilityDateSummary(windowData.new_moon_date), "date-summary");
+        runRender(() => renderVisibilitySummaryCards(visibilityData, windowData), "summary-cards");
+        runRender(() => renderVisibilityResults(visibilityData), "criteria");
+        runRender(() => renderWindowSummary(windowData), "window-summary");
+        runRender(() => renderWindowTable(windowData), "window-table");
 
         renderSelectedLocationSummary();
 

@@ -84,7 +84,7 @@ body {
 /* General Cards */
 
 .card {
-    background: rgba(17,47,101,0.72);
+    background:rgba(17,47,101,0.72);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     padding: 1.5rem;
@@ -182,6 +182,26 @@ body {
 .phase-illumination {
     font-size: 0.95rem;
     color: #e9e6f4;
+}
+
+.visibility-hero-summary {
+    margin-top: 0.35rem;
+    width: 100%;
+    max-width: none;
+}
+
+.visibility-hero-summary-text {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#visibility-summary-cards {
+    margin-top: 0.25rem;
+}
+
+#visibility-summary-cards .data-item {
+    min-height: 100%;
 }
 
 .hidden-form-card {
@@ -443,6 +463,42 @@ button:hover {
     opacity: 0.8;
 }
 
+.visibility-consensus-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0.35rem;
+    padding: 0.8rem 0.95rem;
+    border-radius: 12px;
+    border: 1px solid rgba(233, 230, 244, 0.1);
+    background: rgba(104, 94, 174, 0.18);
+}
+
+.visibility-new-moon-line {
+    margin-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.visibility-consensus-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.visibility-consensus-value {
+    font-size: 1.25rem;
+    color: #e9e6f4;
+}
+
 /* About page */
 .about-page h1 {
     text-align: center;
@@ -538,6 +594,20 @@ button:hover {
     .moon-phase-image {
         width: 150px;
     }
+
+    .visibility-hero-summary-text {
+        font-size: 0.95rem;
+    }
+
+    .visibility-consensus-line {
+        margin-top: 0.1rem;
+        padding: 0.7rem 0.8rem;
+    }
+
+    .visibility-consensus-title,
+    .visibility-consensus-value {
+        font-size: 1.15rem;
+    }
 }
 
 /* Bootstrap-sm and below: keep arrows clear of the moon image on narrow devices. */
@@ -556,6 +626,21 @@ button:hover {
     .moon-phase-image {
         width: 120px;
         max-width: 48vw;
+    }
+
+    .visibility-hero-summary-text {
+        font-size: 0.92rem;
+        line-height: 1.35;
+    }
+
+    .visibility-consensus-line {
+        padding: 0.65rem 0.75rem;
+        gap: 0.25rem;
+    }
+
+    .visibility-consensus-title,
+    .visibility-consensus-value {
+        font-size: 1.1rem;
     }
 
     .about-page .about-science-image {
