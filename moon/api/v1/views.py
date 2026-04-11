@@ -51,6 +51,10 @@ from django.db import transaction
 import secrets
 
 
+def _frontend_url(path: str) -> str:
+    return f"{settings.FRONTEND_URL.rstrip('/')}/{path.lstrip('/')}"
+
+
 def _select_active_new_moon_for_visibility(selected_dt_utc, threshold_days=5):
     """
     Use the most recent conjunction for up to `threshold_days` after it.
@@ -416,7 +420,7 @@ def _send_verification_email(user):
     EmailVerificationToken.objects.filter(user=user).delete()
     EmailVerificationToken.objects.create(user=user, token=token)
 
-    verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+    verification_url = f"{_frontend_url('/verify-email/')}?token={token}"
     send_mail(
         subject="Verify your LunaVis email",
         message=f"Click the link to verify your email: {verification_url}",
@@ -432,7 +436,7 @@ def _send_password_reset_email(user):
     token = secrets.token_urlsafe(32)
     PasswordResetToken.objects.create(user=user, token=token)
 
-    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    reset_url = f"{_frontend_url('/reset-password/')}?token={token}"
     send_mail(
         subject="Reset your LunaVis password",
         message=f"Click the link to reset your password: {reset_url}",
@@ -528,7 +532,10 @@ def verify_email_view(request):
         email_token.delete()
         
         return Response(
-            {"detail": "Email verified successfully"},
+            {
+                "detail": "Email verified successfully. You can now log in.",
+                "login_url": _frontend_url('/login/'),
+            },
             status=status.HTTP_200_OK
         )
     except EmailVerificationToken.DoesNotExist:
