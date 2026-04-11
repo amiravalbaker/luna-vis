@@ -24,7 +24,7 @@ async function verifyEmailFromUrl() {
 
     try {
         const data = await apiPost("/api/v1/auth/verify-email/", { token });
-        statusEl.textContent = data.detail || "Email verified successfully. You can now log in.";
+        statusEl.textContent = data.detail || "Verification successful. You can now log in to your app.";
     } catch (error) {
         statusEl.textContent = `Error: ${parseApiError(error)}`;
     }
