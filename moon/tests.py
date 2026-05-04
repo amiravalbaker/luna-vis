@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from moon.engine.criteria.base import Verdict
+from moon.engine.phase import phase_name_from_datetime
 from moon.engine.phase import moon_age_hours
 from moon.services.observation_services import create_observation_with_analysis
 
@@ -103,6 +104,27 @@ class VisibilityMoonAgeTests(TestCase):
 		expected_age = moon_age_hours(sunset_utc)
 		self.assertAlmostEqual(payload["moon_age_hours"], expected_age, places=6)
 
+	def test_visibility_includes_full_moon_timestamps(self):
+		response = self.client.get(
+			"/api/v1/visibility/",
+			{
+				"lat": 50.1186,
+				"lon": -5.5372,
+				"date": "2026-03-20",
+				"tz": "Europe/London",
+				"elevation_m": 0,
+			},
+		)
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+
+		self.assertIn("full_moon_date", payload)
+		self.assertIn("full_moon_conjunction_utc", payload)
+		self.assertIsNotNone(payload["full_moon_date"])
+		self.assertIsNotNone(payload["full_moon_conjunction_utc"])
+		_parse_iso_utc(payload["full_moon_conjunction_utc"])
+
 
 class VisibilityWindowEventTimesTests(TestCase):
 	def test_visibility_window_includes_sunset_and_moonset_per_night(self):
@@ -131,3 +153,47 @@ class VisibilityWindowEventTimesTests(TestCase):
 			for criterion in night["criteria"]:
 				self.assertIsNotNone(criterion.get("band"))
 				self.assertIsNotNone(criterion.get("score"))
+
+
+class PhaseNamingBoundaryTests(TestCase):
+	@patch("moon.engine.phase.get_surrounding_phase_events")
+	def test_phase_name_returns_full_moon_near_full_event(self, mock_surrounding):
+		now = datetime(2026, 4, 2, 12, 0, tzinfo=UTC)
+		mock_surrounding.return_value = (
+			SimpleNamespace(phase_index=1, phase_name="First Quarter", time_utc=datetime(2026, 4, 2, 0, 0, tzinfo=UTC)),
+			SimpleNamespace(phase_index=2, phase_name="Full Moon", time_utc=datetime(2026, 4, 2, 18, 0, tzinfo=UTC)),
+		)
+
+		self.assertEqual(phase_name_from_datetime(now), "Full Moon")
+
+	@patch("moon.engine.phase.get_surrounding_phase_events")
+	def test_phase_name_returns_new_moon_near_new_event(self, mock_surrounding):
+		now = datetime(2026, 3, 19, 12, 0, tzinfo=UTC)
+		mock_surrounding.return_value = (
+			SimpleNamespace(phase_index=3, phase_name="Last Quarter", time_utc=datetime(2026, 3, 19, 0, 0, tzinfo=UTC)),
+			SimpleNamespace(phase_index=0, phase_name="New Moon", time_utc=datetime(2026, 3, 19, 18, 0, tzinfo=UTC)),
+		)
+
+		self.assertEqual(phase_name_from_datetime(now), "New Moon")
+
+	def test_visibility_window_includes_full_moon_timestamps(self):
+		response = self.client.get(
+			"/api/v1/visibility-window/",
+			{
+				"lat": 50.1186,
+				"lon": -5.5372,
+				"start_date": "2026-03-20",
+				"tz": "Europe/London",
+				"elevation_m": 0,
+				"nights": 5,
+			},
+		)
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+
+		self.assertIn("full_moon_date", payload)
+		self.assertIn("full_moon_conjunction_utc", payload)
+		self.assertIsNotNone(payload["full_moon_date"])
+		self.assertIsNotNone(payload["full_moon_conjunction_utc"])
+		_parse_iso_utc(payload["full_moon_conjunction_utc"])

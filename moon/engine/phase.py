@@ -98,6 +98,19 @@ def find_new_moon_on_date(day: date_type) -> datetime | None:
     return None
 
 
+def find_full_moon_on_date(day: date_type) -> datetime | None:
+    start_utc = datetime.combine(day, time.min, tzinfo=UTC)
+    end_utc = start_utc + timedelta(days=1)
+
+    events = _find_phase_events_between(start_utc, end_utc)
+
+    for event in events:
+        if event.phase_index == 2:
+            return event.time_utc
+
+    return None
+
+
 def find_previous_new_moon(before_utc: datetime) -> datetime:
     start_utc = before_utc - timedelta(days=35)
     events = _find_phase_events_between(start_utc, before_utc)
@@ -112,6 +125,21 @@ def find_previous_new_moon(before_utc: datetime) -> datetime:
 
     return previous_new_moon
 
+
+def find_previous_full_moon(before_utc: datetime) -> datetime:
+    start_utc = before_utc - timedelta(days=35)
+    events = _find_phase_events_between(start_utc, before_utc)
+
+    previous_full_moon = None
+    for event in events:
+        if event.phase_index == 2:
+            previous_full_moon = event.time_utc
+
+    if previous_full_moon is None:
+        raise ValueError("No previous full moon found in search interval.")
+
+    return previous_full_moon
+
 def find_next_new_moon(after_utc: datetime) -> datetime:
     end_utc = after_utc + timedelta(days=35)
     events = _find_phase_events_between(after_utc, end_utc)
@@ -121,6 +149,17 @@ def find_next_new_moon(after_utc: datetime) -> datetime:
             return event.time_utc
 
     raise ValueError("No next new moon found in search interval.")
+
+
+def find_next_full_moon(after_utc: datetime) -> datetime:
+    end_utc = after_utc + timedelta(days=35)
+    events = _find_phase_events_between(after_utc, end_utc)
+
+    for event in events:
+        if event.phase_index == 2 and event.time_utc > after_utc:
+            return event.time_utc
+
+    raise ValueError("No next full moon found in search interval.")
 
 def moon_age_hours(at_utc: datetime) -> float:
     previous_new = find_previous_new_moon(at_utc)
@@ -133,6 +172,9 @@ def phase_name_from_datetime(at_utc: datetime) -> str:
     """
     previous_event, next_event = get_surrounding_phase_events(at_utc)
 
+    hours_since_previous = (at_utc - previous_event.time_utc).total_seconds() / 3600.0
+    hours_until_next = (next_event.time_utc - at_utc).total_seconds() / 3600.0
+
     prev_idx = previous_event.phase_index
     next_idx = next_event.phase_index
 
@@ -143,23 +185,25 @@ def phase_name_from_datetime(at_utc: datetime) -> str:
     # Last Quarter -> New = Waning Crescent
 
     if prev_idx == 0 and next_idx == 1:
-        # Very close to conjunction should still be shown as New Moon
-        hours_since_prev = (at_utc - previous_event.time_utc).total_seconds() / 3600.0
-        if hours_since_prev < 12:
+        # Very close to conjunction should still be shown as New Moon.
+        if hours_since_previous <= 12:
             return "New Moon"
         return "Waxing Crescent"
 
     if prev_idx == 1 and next_idx == 2:
+        if hours_until_next <= 12:
+            return "Full Moon"
         return "Waxing Gibbous"
 
     if prev_idx == 2 and next_idx == 3:
-        # Very close to full moon
-        hours_since_prev = (at_utc - previous_event.time_utc).total_seconds() / 3600.0
-        if hours_since_prev < 12:
+        # Very close to full moon.
+        if hours_since_previous <= 12:
             return "Full Moon"
         return "Waning Gibbous"
 
     if prev_idx == 3 and next_idx == 0:
+        if hours_until_next <= 12:
+            return "New Moon"
         return "Waning Crescent"
 
     # Fallbacks at the exact quarter moments

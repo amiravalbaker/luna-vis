@@ -13,7 +13,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from datetime import datetime, time, UTC, timedelta
 
 from yaml import serializer
-from moon.engine.phase import find_previous_new_moon, find_next_new_moon, find_new_moon_on_date
+from moon.engine.phase import (
+    find_previous_new_moon,
+    find_next_new_moon,
+    find_new_moon_on_date,
+    find_previous_full_moon,
+    find_next_full_moon,
+)
 from moon.models import Observation, FavouriteLocation
 from moon.models import UserProfile, EmailVerificationToken, PasswordResetToken
 from moon.services.observation_services import create_observation_with_analysis
@@ -121,6 +127,10 @@ def daily_view(request):
         "moon_age_hours": summary.moon_age_hours,
         "illumination_fraction": summary.illumination_fraction,
         "phase_name": summary.phase_name,
+        "previous_new_moon_time_utc": summary.previous_new_moon_time_utc,
+        "next_new_moon_time_utc": summary.next_new_moon_time_utc,
+        "previous_full_moon_time_utc": summary.previous_full_moon_time_utc,
+        "next_full_moon_time_utc": summary.next_full_moon_time_utc,
         "previous_phase_name": summary.previous_phase_name,
         "previous_phase_time_utc": summary.previous_phase_time_utc,
         "next_phase_name": summary.next_phase_name,
@@ -153,6 +163,8 @@ def visibility_view(request):
 
     previous_new_moon_utc = find_previous_new_moon(active_new_moon_utc - timedelta(seconds=1))
     next_new_moon_utc = find_next_new_moon(active_new_moon_utc + timedelta(seconds=1))
+    previous_full_moon_utc = find_previous_full_moon(active_new_moon_utc - timedelta(seconds=1))
+    next_full_moon_utc = find_next_full_moon(active_new_moon_utc + timedelta(seconds=1))
 
     result = get_visibility_for_date(
         lat=lat,
@@ -189,6 +201,12 @@ def visibility_view(request):
         "next_new_moon_utc": next_new_moon_utc,
         "previous_new_moon_date": str(previous_new_moon_utc.date()),
         "next_new_moon_date": str(next_new_moon_utc.date()),
+        "full_moon_date": str(next_full_moon_utc.date()),
+        "full_moon_conjunction_utc": next_full_moon_utc,
+        "previous_full_moon_utc": previous_full_moon_utc,
+        "previous_full_moon_date": str(previous_full_moon_utc.date()),
+        "next_full_moon_utc": next_full_moon_utc,
+        "next_full_moon_date": str(next_full_moon_utc.date()),
 
         "date_local": str(result["date_local"]),
         "sunset_utc": result["sunset_utc"],
@@ -233,6 +251,8 @@ def visibility_window_view(request):
 
     previous_new_moon_utc = find_previous_new_moon(active_new_moon_utc - timedelta(seconds=1))
     next_new_moon_utc = find_next_new_moon(active_new_moon_utc + timedelta(seconds=1))
+    previous_full_moon_utc = find_previous_full_moon(active_new_moon_utc - timedelta(seconds=1))
+    next_full_moon_utc = find_next_full_moon(active_new_moon_utc + timedelta(seconds=1))
 
     result = get_visibility_window(
         lat=lat,
@@ -255,6 +275,12 @@ def visibility_window_view(request):
         "next_new_moon_utc": next_new_moon_utc,
         "previous_new_moon_date": str(previous_new_moon_utc.date()),
         "next_new_moon_date": str(next_new_moon_utc.date()),
+        "full_moon_date": str(next_full_moon_utc.date()),
+        "full_moon_conjunction_utc": next_full_moon_utc,
+        "previous_full_moon_utc": previous_full_moon_utc,
+        "previous_full_moon_date": str(previous_full_moon_utc.date()),
+        "next_full_moon_utc": next_full_moon_utc,
+        "next_full_moon_date": str(next_full_moon_utc.date()),
 
         "start_date": str(visibility_anchor_date),
         "nights": nights,

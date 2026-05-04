@@ -207,6 +207,8 @@ function renderVisibilitySummaryCards(data, windowData) {
     const consensusText = firstConsensusDate ? safeFormatDateLong(firstConsensusDate) : "Not reached in current window";
     const conjunctionUtc = windowData?.new_moon_conjunction_utc || data?.new_moon_conjunction_utc;
     const conjunctionText = `${windowData?.new_moon_date ? safeFormatDateLong(windowData.new_moon_date) : "N/A"} @${conjunctionUtc ? formatTimeOnly(conjunctionUtc, tz) : "N/A"}`;
+    const fullMoonUtc = windowData?.full_moon_conjunction_utc || data?.full_moon_conjunction_utc;
+    const fullMoonText = `${windowData?.full_moon_date ? safeFormatDateLong(windowData.full_moon_date) : "N/A"} @${fullMoonUtc ? formatTimeOnly(fullMoonUtc, tz) : "N/A"}`;
 
     container.innerHTML = `
         <div class="row g-3">
@@ -214,6 +216,13 @@ function renderVisibilitySummaryCards(data, windowData) {
                 <div class="data-item data-item-centered visibility-new-moon-line">
                     <span class="visibility-consensus-title">New Moon Conjunction:</span>
                     <span class="visibility-consensus-value">${conjunctionText}</span>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="data-item data-item-centered visibility-new-moon-line">
+                    <span class="visibility-consensus-title">Full Moon:</span>
+                    <span class="visibility-consensus-value">${fullMoonText}</span>
                 </div>
             </div>
 
