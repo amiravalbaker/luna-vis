@@ -51,7 +51,7 @@ from .serializers import (
      ResendVerificationEmailSerializer,
     )
 
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.conf import settings
 from django.db import transaction
 import secrets
@@ -64,9 +64,7 @@ def _frontend_url(path: str) -> str:
 
 def _verification_email_url(token: str) -> str:
     query = urlencode({"token": token})
-
-    scheme = str(getattr(settings, "EMAIL_VERIFICATION_SCHEME", "lunavis")).strip() or "lunavis"
-    return f"{scheme}://verify-email?{query}"
+    return f"{_frontend_url('/verify-email/')}?{query}"
 
 
 def _select_active_new_moon_for_visibility(selected_dt_utc, threshold_days=5):
@@ -455,13 +453,21 @@ def _send_verification_email(user):
     EmailVerificationToken.objects.create(user=user, token=token)
 
     verification_url = _verification_email_url(token)
-    send_mail(
-        subject="Verify your LunaVis email",
-        message=f"Click the link to verify your email: {verification_url}",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
+    subject = "Verify your LunaVis email"
+    text_body = f"Click the link to verify your email: {verification_url}"
+    html_body = (
+        "<p>Click the link below to verify your email:</p>"
+        f'<p><a href="{verification_url}">{verification_url}</a></p>'
     )
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)
     return token
 
 

@@ -1,4 +1,12 @@
+from pathlib import Path
+
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
+
+
+def _assetlinks_file_path() -> Path:
+    return Path(__file__).resolve().parent / "static" / ".well-known" / "assetlinks.json"
 
 
 def daily_page(request):
@@ -27,3 +35,11 @@ def observations_page(request):
 
 def about_page(request):
     return render(request, "moon/about.html")
+
+
+def assetlinks_json(request):
+    file_path = _assetlinks_file_path()
+    return HttpResponse(
+        file_path.read_text(encoding="utf-8"),
+        content_type="application/json",
+    )

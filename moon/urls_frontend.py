@@ -9,6 +9,7 @@ from .views_frontend import (
     favourites_page,
     observations_page,
     about_page,
+    assetlinks_json,
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     path("favourites/", favourites_page, name="favourites-page"),
     path("observations/", observations_page, name="observations-page"),
     path("about/", about_page, name="about-page"),
+    path(".well-known/assetlinks.json", assetlinks_json, name="assetlinks-json"),
 ]
