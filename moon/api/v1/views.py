@@ -67,6 +67,11 @@ def _verification_email_url(token: str) -> str:
     return f"{_frontend_url('/verify-email/')}?{query}"
 
 
+def _password_reset_email_url(token: str) -> str:
+    query = urlencode({"token": token})
+    return f"{_frontend_url('/reset-password/')}?{query}"
+
+
 def _select_active_new_moon_for_visibility(selected_dt_utc, threshold_days=5):
     """
     Use the most recent conjunction for up to `threshold_days` after it.
@@ -474,16 +479,25 @@ def _send_verification_email(user):
 def _send_password_reset_email(user):
     """Generate and send password reset token."""
     token = secrets.token_urlsafe(32)
+    PasswordResetToken.objects.filter(user=user).delete()
     PasswordResetToken.objects.create(user=user, token=token)
 
-    reset_url = f"{_frontend_url('/reset-password/')}?token={token}"
-    send_mail(
-        subject="Reset your LunaVis password",
-        message=f"Click the link to reset your password: {reset_url}",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
+    reset_url = _password_reset_email_url(token)
+    subject = "Reset your LunaVis password"
+    text_body = f"Click the link to reset your password: {reset_url}"
+    html_body = (
+        "<p>Click the link below to reset your password:</p>"
+        f'<p><a href="{reset_url}">{reset_url}</a></p>'
     )
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)
     return token
 
 
