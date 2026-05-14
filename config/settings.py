@@ -212,6 +212,9 @@ EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 30))
 # Frontend URL for links in emails
 FRONTEND_URL = env_str("FRONTEND_URL", "http://localhost:3000")
 
+# Email verification links always open the mobile app via the custom scheme.
+EMAIL_VERIFICATION_SCHEME = env_str("EMAIL_VERIFICATION_SCHEME", "lunavis")
+
 # Visibility UX tuning: keep current conjunction for this many days,
 # then switch to the upcoming conjunction for visibility computations.
 VISIBILITY_NEW_MOON_SWITCH_DAYS = int(os.environ.get("VISIBILITY_NEW_MOON_SWITCH_DAYS", 5))

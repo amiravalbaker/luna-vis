@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from moon.engine.criteria.base import Verdict
 from moon.engine.phase import phase_name_from_datetime
@@ -153,6 +153,24 @@ class VisibilityWindowEventTimesTests(TestCase):
 			for criterion in night["criteria"]:
 				self.assertIsNotNone(criterion.get("band"))
 				self.assertIsNotNone(criterion.get("score"))
+
+
+class VerificationEmailLinkTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username="verifyuser", password="x", email="verify@example.com")
+
+	@override_settings(
+		EMAIL_VERIFICATION_SCHEME="lunavis",
+	)
+	@patch("moon.api.v1.views.send_mail")
+	@patch("moon.api.v1.views.secrets.token_urlsafe", return_value="token-123")
+	def test_verification_email_uses_custom_scheme(self, mock_token, mock_send_mail):
+		from moon.api.v1.views import _send_verification_email
+
+		_send_verification_email(self.user)
+
+		message = mock_send_mail.call_args.kwargs["message"]
+		self.assertIn("lunavis://verify-email?token=token-123", message)
 
 
 class PhaseNamingBoundaryTests(TestCase):

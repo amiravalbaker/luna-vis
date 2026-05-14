@@ -55,10 +55,18 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
 import secrets
+from urllib.parse import urlencode
 
 
 def _frontend_url(path: str) -> str:
     return f"{settings.FRONTEND_URL.rstrip('/')}/{path.lstrip('/')}"
+
+
+def _verification_email_url(token: str) -> str:
+    query = urlencode({"token": token})
+
+    scheme = str(getattr(settings, "EMAIL_VERIFICATION_SCHEME", "lunavis")).strip() or "lunavis"
+    return f"{scheme}://verify-email?{query}"
 
 
 def _select_active_new_moon_for_visibility(selected_dt_utc, threshold_days=5):
@@ -446,7 +454,7 @@ def _send_verification_email(user):
     EmailVerificationToken.objects.filter(user=user).delete()
     EmailVerificationToken.objects.create(user=user, token=token)
 
-    verification_url = f"{_frontend_url('/verify-email/')}?token={token}"
+    verification_url = _verification_email_url(token)
     send_mail(
         subject="Verify your LunaVis email",
         message=f"Click the link to verify your email: {verification_url}",

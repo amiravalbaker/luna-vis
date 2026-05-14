@@ -59,6 +59,16 @@ Run Django so devices can reach it:
 python manage.py runserver 0.0.0.0:8000
 ```
 
+## 4.5) Email verification links
+
+LunaVis sends verification emails as a custom scheme link so Android opens the app directly:
+
+- `lunavis://verify-email?token=...`
+
+Set `EMAIL_VERIFICATION_SCHEME=lunavis` in Django if you want to keep the default scheme explicit.
+
+For the "never open a browser" experience on Android, the app must register `lunavis://` in its Android manifest and handle the incoming `token` inside the app.
+
 ## 5) Recommended Flutter folder structure
 
 Inside luna_vis_mobile/lib:
