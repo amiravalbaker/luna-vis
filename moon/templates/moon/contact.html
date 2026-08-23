@@ -1,0 +1,39 @@
+{% extends "moon/base.html" %}
+{% load static %}
+
+{% block title %}Contact{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+<div class="container-fluid px-0 about-page">
+    <div class="row g-3">
+        <div class="col-12">
+            <section class="card mb-0">
+                <h1 class="mb-3">LunaVis</h1>
+                <p class="mb-0">
+                    Contact Luna Vis for account support and/or to delete your account : lunavis786@gmail.com
+                </p>
+            </section>
+        </div>
+    </div>
+</div>    
+                 
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof renderMathInElement === "function") {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
+                ],
+                throwOnError: false
+            });
+        }
+    });
+</script>
+{% endblock %}
